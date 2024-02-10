@@ -1,5 +1,5 @@
 import "./tailwind.css"
-import { json, type LoaderFunctionArgs } from "@remix-run/node"
+import { json, type LoaderFunction } from "@remix-run/node"
 import {
   Links,
   Meta,
@@ -15,7 +15,7 @@ import { getEnv } from "./utils/env.server"
 
 const queryClient = new QueryClient()
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export const loader: LoaderFunction = async () => {
   return json({ env: getEnv() })
 }
 
