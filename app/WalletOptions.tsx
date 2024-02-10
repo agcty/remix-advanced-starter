@@ -1,11 +1,10 @@
-import { useHydrated } from "remix-utils/use-hydrated"
 import { useConnect } from "wagmi"
 
-function ConnectorList() {
+function HydratedConnectorList() {
   const { connectors, connect } = useConnect()
 
   return (
-    <div className="bg-gray-300 p-8">
+    <div className="w-full max-w-sm rounded-lg bg-gray-300 p-8">
       {connectors.map(connector => (
         <ConnectorButton
           key={connector.uid}
@@ -27,7 +26,7 @@ function ConnectorButton({
 }) {
   return (
     <button
-      className="rounded-2xl bg-gray-100 px-4 py-2 font-medium"
+      className="w-full rounded-2xl bg-gray-100 px-4 py-2 font-medium"
       onClick={onClick}
     >
       {children}
@@ -35,16 +34,6 @@ function ConnectorButton({
   )
 }
 
-function ServerFallback() {
-  return (
-    <div className="bg-gray-300 p-8">
-      <ConnectorButton>Metamask</ConnectorButton>
-    </div>
-  )
-}
-
-// Wallet Options for when the user is not connected to a wallet
 export default function WalletOptions() {
-  const isHydrated = useHydrated()
-  return isHydrated ? <ConnectorList /> : <ServerFallback />
+  return <HydratedConnectorList />
 }

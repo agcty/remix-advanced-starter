@@ -24,8 +24,8 @@
     "isbot": "^4.4.0",
     "morgan": "^1.10.0",
     "prisma": "^5.9.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "18.3.0-canary-03d6f7cf0-20240209",
+    "react-dom": "18.3.0-canary-03d6f7cf0-20240209",
     "remix-auth": "^3.6.0",
     "remix-development-tools": "^3.7.4",
     "remix-flat-routes": "^0.6.4",
@@ -34,6 +34,10 @@
     "viem": "^2.7.1",
     "wagmi": "^2.5.5",
     "zod": "^3.22.4"
+  },
+  "overrides": {
+    "react": "18.3.0-canary-03d6f7cf0-20240209",
+    "react-dom": "18.3.0-canary-03d6f7cf0-20240209"
   },
   "devDependencies": {
     "@remix-run/dev": "^2.6.0",

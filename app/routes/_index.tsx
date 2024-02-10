@@ -56,8 +56,13 @@ export function useSignInWithEthereum() {
 export default function Index() {
   const { user } = useLoaderData<typeof loader>()
 
+  const { address, isConnecting, isReconnecting } = useAccount()
+
   return (
     <div className="flex h-screen w-full flex-col items-center justify-center space-y-4 bg-gray-100">
+      {address}
+      {isConnecting ? <p>Connecting...</p> : null}
+      {isReconnecting ? <p>Reconnecting...</p> : null}
       {user ? (
         <div>
           <h1>Welcome back, {user.address}</h1>
@@ -73,11 +78,8 @@ export default function Index() {
 }
 
 function ConnectWallet() {
-  const isHydrated = useHydrated()
   const { authenticate } = useSignInWithEthereum()
   const { isConnected } = useAccount()
-
-  if (!isHydrated) return null
 
   return (
     <>
