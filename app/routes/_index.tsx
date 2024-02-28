@@ -1,7 +1,6 @@
 import { useCallback } from "react"
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node"
 import { json, useLoaderData, useSubmit } from "@remix-run/react"
-import { useHydrated } from "remix-utils/use-hydrated"
 import { SiweMessage } from "siwe"
 import { useAccount, useSignMessage } from "wagmi"
 import { authenticator } from "~/utils/authenticator.server"

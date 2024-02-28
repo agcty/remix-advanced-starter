@@ -40,6 +40,7 @@ module.exports = {
             fixStyle: "inline-type-imports",
           },
         ],
+        "react/no-unescaped-entities": "warn",
         "simple-import-sort/imports": [
           "warn",
           {
@@ -75,7 +76,12 @@ module.exports = {
           { name: "NavLink", linkAttribute: "to" },
         ],
         "import/resolver": {
-          typescript: {},
+          typescript: {
+            debug: true,
+            alwaysTryTypes: true,
+            // TODO: put packages into packages folder and fix monorepo setup
+            project: ".",
+          },
         },
       },
     },
@@ -86,13 +92,16 @@ module.exports = {
       plugins: ["@typescript-eslint", "import"],
       parser: "@typescript-eslint/parser",
       settings: {
-        "import/internal-regex": "^~/",
+        // "import/internal-regex": "^~/",
         "import/resolver": {
           node: {
             extensions: [".ts", ".tsx"],
           },
           typescript: {
+            debug: true,
             alwaysTryTypes: true,
+            // TODO: put packages into packages folder and fix monorepo setup
+            project: ".",
           },
         },
       },
@@ -106,7 +115,7 @@ module.exports = {
 
     // Node
     {
-      files: [".eslintrc.cjs", "server.js"],
+      files: [".eslintrc.cjs", "server.js", "other/sentry-create-release.js"],
       env: {
         node: true,
       },
