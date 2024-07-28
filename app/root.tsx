@@ -7,7 +7,9 @@ import {
   Scripts,
   ScrollRestoration,
   useLoaderData,
+  useNavigate,
 } from "@remix-run/react"
+import { RouterProvider } from "react-aria-components"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cookieToInitialState, WagmiProvider } from "wagmi"
 import { config } from "./utils/chain-config"
@@ -27,6 +29,7 @@ export const loader: LoaderFunction = async ({ request }) => {
 export default function App() {
   const { env, connectorState } = useLoaderData<typeof loader>()
   const initialState = cookieToInitialState(config, connectorState)
+  const navigate = useNavigate()
 
   return (
     <html lang="en">
@@ -39,7 +42,9 @@ export default function App() {
       <body>
         <WagmiProvider config={config} initialState={initialState}>
           <QueryClientProvider client={queryClient}>
-            <Outlet />
+            <RouterProvider navigate={navigate}>
+              <Outlet />
+            </RouterProvider>
           </QueryClientProvider>
         </WagmiProvider>
         <ScrollRestoration />

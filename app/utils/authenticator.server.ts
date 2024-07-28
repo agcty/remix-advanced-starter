@@ -1,10 +1,9 @@
 import { Authenticator } from "remix-auth"
-import { db } from "./db.server"
 import { sessionStorage } from "./session.server"
-import { SiweStrategy } from "./siwe-strategy.server"
 
 type User = {
   address: string
+  id: string
 }
 
 // Create an instance of the authenticator, pass a generic with what
@@ -14,18 +13,36 @@ export const authenticator = new Authenticator<User>(sessionStorage, {
   sessionErrorKey: "sessionErrorKey", // keep in sync
 })
 
-authenticator.use(
-  new SiweStrategy({ domain: "localhost:3000" }, async ({ message }) => {
-    const user = await db.user.upsert({
-      create: {
-        address: message.address,
-      },
-      update: {},
-      where: {
-        address: message.address,
-      },
-    })
-    return { address: user.id, id: user.id }
-  }),
-  "siwe",
-)
+// authenticator.use(
+//   new MyCustomStrategy({ domain: "localhost:3000" }, async ({ message }) => {
+//     // check if the user is already in the database
+//     const existingUser = await db.query.user.findFirst({
+//       where: eq(user.address, message.address),
+//     })
+
+//     if (existingUser) {
+//       return {
+//         address: existingUser.address,
+//         id: existingUser.id,
+//       }
+//     }
+
+//     // if the user is not in the database, add them
+//     await db.insert(user).values({ id: createId(), address: message.address })
+
+//     const createdUser = await db.query.user.findFirst({
+//       where: eq(user.address, message.address),
+//     })
+
+//     if (!createdUser) {
+//       throw new Error("User not created")
+//     }
+
+//     console.log("user", createdUser)
+//     return {
+//       address: createdUser.address,
+//       id: createdUser.id,
+//     }
+//   }),
+//   "strategu",
+// )
