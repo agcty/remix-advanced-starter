@@ -16,3 +16,9 @@ This is a starter project for Remix. It includes a few common configurations tha
 ## Non Features
 
 - **Deploy** - This project is not configured with a deployment strategy. You need to deploy it to wherever you want yourself.
+
+## Deploy
+
+```bash
+docker build -t remix-vite:latest -f other/Dockerfile .
+```

@@ -90,9 +90,8 @@ app.use(
   morgan("tiny", {
     skip: (req, res) =>
       res.statusCode === 200 &&
-      (req.url?.startsWith("/resources/note-images") ||
-        req.url?.startsWith("/resources/user-images") ||
-        req.url?.startsWith("/resources/healthcheck")),
+      // req.url?.startsWith("/resources/note-images") ||
+      req.url?.startsWith("/api/healthcheck"),
   }),
 )
 
@@ -150,7 +149,7 @@ const rateLimitDefault = {
   // When sitting behind a CDN such as cloudflare, replace fly-client-ip with the CDN
   // specific header such as cf-connecting-ip
   keyGenerator: (req: express.Request) => {
-    return req.get("fly-client-ip") ?? `${req.ip}`
+    return req.get("cf-connecting-ip") ?? `${req.ip}`
   },
 }
 
@@ -198,8 +197,7 @@ app.use((req, res, next) => {
 async function getBuild() {
   const build = viteDevServer
     ? viteDevServer.ssrLoadModule("virtual:remix/server-build")
-    : // @ts-ignore this should exist before running the server
-      // but it may not exist just yet.
+    : // but it may not exist just yet.
       await import("../build/server/index.js")
   // not sure how to make this happy 🤷‍♂️
   return build as unknown as ServerBuild
