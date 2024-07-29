@@ -1,5 +1,6 @@
 import "./tailwind.css"
-import { ActionFunctionArgs, json, type LoaderFunction } from "@remix-run/node"
+import { RouterProvider } from "react-aria-components"
+import { json, type LoaderFunction } from "@remix-run/node"
 import {
   Links,
   Meta,
@@ -8,26 +9,20 @@ import {
   ScrollRestoration,
   useLoaderData,
   useNavigate,
-  useMatches,
 } from "@remix-run/react"
-import { RouterProvider } from "react-aria-components"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cookieToInitialState, WagmiProvider } from "wagmi"
+import { useTheme } from "./routes/api+/theme-switch"
+import Toaster from "./routes/components/Toast"
 import { config } from "./utils/chain-config"
-import { getEnv } from "./utils/env.server"
-
 import { ClientHintCheck, getHints } from "./utils/client-hints"
-
-import { useToast } from "./utils/use-toast"
-import { getToast } from "./utils/toaster.server"
-import { getTheme, setTheme, Theme } from "./utils/theme.server"
+import { getEnv } from "./utils/env.server"
 import { combineHeaders, getDomainUrl } from "./utils/misc"
 import { useNonce } from "./utils/nonce-provider"
-import Toaster from "./routes/components/Toast"
-import { parseWithZod } from "@conform-to/zod"
-import { z } from "zod"
-import { useTheme } from "./routes/api+/theme-switch"
+import { getTheme, type Theme } from "./utils/theme.server"
 import { makeTimings } from "./utils/timing.server"
+import { getToast } from "./utils/toaster.server"
+import { useToast } from "./utils/use-toast"
 
 const queryClient = new QueryClient()
 

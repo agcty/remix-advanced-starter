@@ -117,7 +117,12 @@ module.exports = {
 
     // Node
     {
-      files: [".eslintrc.cjs", "server.js", "other/sentry-create-release.js"],
+      files: [
+        ".eslintrc.cjs",
+        "monitoring.js",
+        "server.js",
+        "other/sentry-create-release.js",
+      ],
       env: {
         node: true,
       },

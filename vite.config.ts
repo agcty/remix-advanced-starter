@@ -1,10 +1,10 @@
 import { vitePlugin as remix } from "@remix-run/dev"
+import { sentryVitePlugin } from "@sentry/vite-plugin"
+import { glob } from "glob"
 import { remixDevTools } from "remix-development-tools"
 import { flatRoutes } from "remix-flat-routes"
-import { sentryVitePlugin } from "@sentry/vite-plugin"
 import { defineConfig } from "vite"
 import tsconfigPaths from "vite-tsconfig-paths"
-import { glob } from "glob"
 
 const MODE = process.env.NODE_ENV
 

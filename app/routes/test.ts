@@ -5,12 +5,12 @@ import { redirectWithToast } from "~/utils/toaster.server"
 
 export async function loader() {
   // insert into organizations (name) values ('test')
-//   await createUserWithOrganization({
-//     name: "test",
-//     email: "hello@dsf.coms",
-//     organizationName: "test",
-//   })
-//   await db.insert(organizations).values({ name: "test" })
+  //   await createUserWithOrganization({
+  //     name: "test",
+  //     email: "hello@dsf.coms",
+  //     organizationName: "test",
+  //   })
+  //   await db.insert(organizations).values({ name: "test" })
   const data = await db.select().from(users)
   //   return data
 

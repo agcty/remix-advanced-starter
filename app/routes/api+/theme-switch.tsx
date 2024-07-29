@@ -1,13 +1,13 @@
-import { useForm, getFormProps } from "@conform-to/react"
+import { getFormProps, useForm } from "@conform-to/react"
 import { parseWithZod } from "@conform-to/zod"
 import { invariantResponse } from "@epic-web/invariant"
-import { json, type ActionFunctionArgs } from "@remix-run/node"
+import { type ActionFunctionArgs, json } from "@remix-run/node"
 import { redirect, useFetcher, useFetchers } from "@remix-run/react"
 import { ServerOnly } from "remix-utils/server-only"
 import { z } from "zod"
 import { useHints } from "~/utils/client-hints"
 import { useRequestInfo } from "~/utils/request-info"
-import { setTheme, Theme } from "~/utils/theme.server"
+import { setTheme, type Theme } from "~/utils/theme.server"
 
 const ThemeFormSchema = z.object({
   theme: z.enum(["system", "light", "dark"]),

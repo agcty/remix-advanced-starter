@@ -6,7 +6,7 @@
   "scripts": {
     "build": "remix vite:build",
     "dev": "node ./server.js",
-    "lint": "eslint --ignore-pattern .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
+    "lint": "eslint --ignore-pattern .gitignore --cache --cache-location ./node_modules/.cache/eslint . --fix",
     "start": "cross-env NODE_ENV=production node ./server.js",
     "db:push": "pnpm drizzle-kit push",
     "typecheck": "tsc"

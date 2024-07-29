@@ -1,6 +1,6 @@
 import { Authenticator } from "remix-auth"
-import { sessionStorage } from "./session.server"
 import { GoogleStrategy, SocialsProvider } from "remix-auth-socials"
+import { sessionStorage } from "./session.server"
 
 type User = {
   email: string

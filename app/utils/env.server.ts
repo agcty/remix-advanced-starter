@@ -7,9 +7,9 @@ const schema = z.object({
   DATABASE_URL: z.string(),
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
-  ALLOW_INDEXING: z.enum(['true', 'false']).optional(),
+  ALLOW_INDEXING: z.enum(["true", "false"]).optional(),
   // If you plan on using Sentry, uncomment this line
-	// SENTRY_DSN: z.string(),
+  // SENTRY_DSN: z.string(),
 })
 
 declare global {
