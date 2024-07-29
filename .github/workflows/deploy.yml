@@ -1,0 +1,112 @@
+name: 🚀 Deploy
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request: {}
+
+env:
+  NODE_VERSION: "20"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  lint:
+    name: ⬣ ESLint
+    runs-on: ubuntu-22.04
+    
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Use Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: 🔬 Lint
+        run: pnpm run lint
+
+  typecheck:
+    name: ʦ TypeScript
+    runs-on: ubuntu-22.04
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Use Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: 🔎 Type check
+        run: pnpm run typecheck --if-present
+
+  deploy:
+    name: 🚀 Deploy
+    runs-on: ubuntu-22.04
+    needs: [lint, typecheck]
+    # only build/deploy branches on pushes
+    if: ${{ github.event_name == 'push' }}
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: "50"
+
+      - name: 👀 Read app name
+        uses: SebRollen/toml-action@v1.2.0
+        id: app_name
+        with:
+          file: "fly.toml"
+          field: "app"
+
+      # move Dockerfile to root
+      - name: 🚚 Move Dockerfile
+        run: |
+          mv ./other/Dockerfile ./Dockerfile
+          mv ./other/Dockerfile.dockerignore ./Dockerfile.dockerignore
+
+      - name: 🎈 Setup Fly
+        uses: superfly/flyctl-actions/setup-flyctl@1.5
+
+      - name: 🚀 Deploy Staging
+        if: ${{ github.ref == 'refs/heads/dev' }}
+        run:
+          flyctl deploy --remote-only --build-arg COMMIT_SHA=${{ github.sha }}
+          --app ${{ steps.app_name.outputs.value }}-staging
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: 🚀 Deploy Production
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run:
+          flyctl deploy --remote-only --build-arg COMMIT_SHA=${{ github.sha }} --build-secret SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
