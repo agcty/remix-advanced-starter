@@ -197,7 +197,8 @@ app.use((req, res, next) => {
 async function getBuild() {
   const build = viteDevServer
     ? viteDevServer.ssrLoadModule("virtual:remix/server-build")
-    : // but it may not exist just yet.
+    : // @ts-expect-error - the file might not exist yet but it will
+      // eslint-disable-next-line import/no-unresolved
       await import("../build/server/index.js")
   // not sure how to make this happy 🤷‍♂️
   return build as unknown as ServerBuild
