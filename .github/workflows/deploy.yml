@@ -21,7 +21,7 @@ jobs:
   lint:
     name: ⬣ ESLint
     runs-on: ubuntu-22.04
-    
+
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -65,7 +65,7 @@ jobs:
         run: pnpm install
 
       - name: 🔎 Type check
-        run: pnpm run typecheck --if-present
+        run: pnpm run typecheck
 
   deploy:
     name: 🚀 Deploy

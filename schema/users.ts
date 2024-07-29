@@ -14,8 +14,8 @@ export const GlobalRole = {
 } as const
 
 // Enum types
-type MembershipRoleType = (typeof MembershipRole)[keyof typeof MembershipRole]
-type GlobalRoleType = (typeof GlobalRole)[keyof typeof GlobalRole]
+// type MembershipRoleType = (typeof MembershipRole)[keyof typeof MembershipRole]
+// type GlobalRoleType = (typeof GlobalRole)[keyof typeof GlobalRole]
 
 // Organization table
 export const organizations = sqliteTable("organizations", {

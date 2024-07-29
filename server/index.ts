@@ -113,18 +113,18 @@ app.use(
           MODE === "development" ? "ws:" : null,
           process.env.SENTRY_DSN ? "*.sentry.io" : null,
           "'self'",
-        ].filter(Boolean),
+        ].filter(Boolean) as string[],
         "font-src": ["'self'"],
         "frame-src": ["'self'"],
         "img-src": ["'self'", "data:"],
         "script-src": [
           "'strict-dynamic'",
           "'self'",
-          // @ts-expect-error
+          // @ts-expect-error - creates a nonce for the script tag
           (_, res) => `'nonce-${res.locals.cspNonce}'`,
         ],
         "script-src-attr": [
-          // @ts-expect-error
+          // @ts-expect-error - creates a nonce for the script tag
           (_, res) => `'nonce-${res.locals.cspNonce}'`,
         ],
         "upgrade-insecure-requests": null,
@@ -213,6 +213,7 @@ if (!ALLOW_INDEXING) {
 app.all(
   "*",
   createRequestHandler({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     getLoadContext: (_: any, res: any) => ({
       cspNonce: res.locals.cspNonce,
       serverBuild: getBuild(),
