@@ -122,6 +122,8 @@ module.exports = {
         "monitoring.js",
         "server.js",
         "other/sentry-create-release.js",
+        "index.js",
+        "server/dev-server.js",
       ],
       env: {
         node: true,

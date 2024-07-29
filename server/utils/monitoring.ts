@@ -20,7 +20,7 @@ export function init() {
     integrations: [httpIntegration(), nodeProfilingIntegration()],
     tracesSampler(samplingContext) {
       // ignore healthcheck transactions by other services (consul, etc.)
-      if (samplingContext.request?.url?.includes("/api/healthcheck")) {
+      if (samplingContext.request?.url?.includes("/resources/healthcheck")) {
         return 0
       }
       return 1
