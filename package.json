@@ -9,7 +9,7 @@
     "build:server": "tsx ./other/build-server.ts",
     "db:push": "pnpm drizzle-kit push",
     "dev": "node ./server/dev-server.js",
-    "lint": "eslint --ignore-pattern .gitignore --cache --cache-location ./node_modules/.cache/eslint . --fix",
+    "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "start": "NODE_ENV=production node .",
     "typecheck": "tsc"
   },
@@ -68,6 +68,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^8.57.0",
+    "@flydotio/dockerfile": "^0.5.8",
     "@remix-run/dev": "^2.10.3",
     "@types/better-sqlite3": "^7.6.11",
     "@types/compression": "^1.7.5",

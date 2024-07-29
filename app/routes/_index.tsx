@@ -64,7 +64,7 @@ export default function Index() {
       {isReconnecting ? <p>Reconnecting...</p> : null}
       {user ? (
         <div>
-          <h1>Welcome back, {user.address}</h1>
+          <h1>Welcome back, {user.email}</h1>
           <p>You are signed in with Ethereum.</p>
         </div>
       ) : (

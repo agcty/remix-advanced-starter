@@ -12,7 +12,7 @@ export async function loader() {
   //     email: "hello@dsf.coms",
   //     organizationName: "test",
   //   })
-  //   await db.insert(organizations).values({ name: "test" })
+  await db.insert(users).values({ email: "test@asdf.com", role: "CUSTOMER" })
   const timings = makeTimings("test loader")
 
   const data = await time(() => db.select().from(users), {

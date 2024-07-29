@@ -31,9 +31,9 @@ module.exports = {
     {
       files: ["**/*.{ts,tsx}"],
       plugins: ["react", "jsx-a11y", "simple-import-sort"],
-      parser: "@typescript-eslint/parser", // Add this line
+      parser: "@typescript-eslint/parser",
       parserOptions: {
-        project: "./tsconfig.json", // Add this line, adjust the path if needed
+        project: "./tsconfig.json",
       },
       rules: {
         "@typescript-eslint/consistent-type-imports": [
@@ -62,6 +62,7 @@ module.exports = {
         ],
         "simple-import-sort/exports": "warn",
         "import/no-duplicates": ["warn", { "prefer-inline": true }],
+        "@typescript-eslint/no-unused-vars": "warn",
       },
       extends: [
         "plugin:react/recommended",
@@ -82,7 +83,7 @@ module.exports = {
         "import/resolver": {
           typescript: {
             alwaysTryTypes: true,
-            project: "./tsconfig.json", // Adjust this path if needed
+            project: "./tsconfig.json",
           },
         },
       },
@@ -94,7 +95,7 @@ module.exports = {
       plugins: ["@typescript-eslint", "import"],
       parser: "@typescript-eslint/parser",
       parserOptions: {
-        project: "./tsconfig.json", // Add this line, adjust the path if needed
+        project: "./tsconfig.json",
       },
       settings: {
         "import/resolver": {
@@ -103,7 +104,7 @@ module.exports = {
           },
           typescript: {
             alwaysTryTypes: true,
-            project: "./tsconfig.json", // Adjust this path if needed
+            project: "./tsconfig.json",
           },
         },
       },
@@ -113,6 +114,9 @@ module.exports = {
         "plugin:import/typescript",
         "plugin:prettier/recommended",
       ],
+      rules: {
+        "@typescript-eslint/no-unused-vars": "warn",
+      },
     },
 
     // Node

@@ -40,6 +40,7 @@ export default async function handleRequest(...args: DocRequestArgs) {
     : "onShellReady"
 
   const nonce = loadContext.cspNonce?.toString() ?? ""
+  // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve, reject) => {
     let didError = false
     // NOTE: this timing will only include things that are rendered in the shell

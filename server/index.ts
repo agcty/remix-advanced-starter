@@ -113,18 +113,18 @@ app.use(
           MODE === "development" ? "ws:" : null,
           process.env.SENTRY_DSN ? "*.sentry.io" : null,
           "'self'",
-        ].filter(Boolean),
+        ].filter(Boolean) as string[],
         "font-src": ["'self'"],
         "frame-src": ["'self'"],
         "img-src": ["'self'", "data:"],
         "script-src": [
           "'strict-dynamic'",
           "'self'",
-          // @ts-expect-error
+          // @ts-expect-error - creates a nonce for the script tag
           (_, res) => `'nonce-${res.locals.cspNonce}'`,
         ],
         "script-src-attr": [
-          // @ts-expect-error
+          // @ts-expect-error - creates a nonce for the script tag
           (_, res) => `'nonce-${res.locals.cspNonce}'`,
         ],
         "upgrade-insecure-requests": null,
@@ -197,7 +197,8 @@ app.use((req, res, next) => {
 async function getBuild() {
   const build = viteDevServer
     ? viteDevServer.ssrLoadModule("virtual:remix/server-build")
-    : // but it may not exist just yet.
+    : // @ts-expect-error - the file might not exist yet but it will
+      // eslint-disable-next-line import/no-unresolved
       await import("../build/server/index.js")
   // not sure how to make this happy 🤷‍♂️
   return build as unknown as ServerBuild
@@ -213,6 +214,7 @@ if (!ALLOW_INDEXING) {
 app.all(
   "*",
   createRequestHandler({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     getLoadContext: (_: any, res: any) => ({
       cspNonce: res.locals.cspNonce,
       serverBuild: getBuild(),
