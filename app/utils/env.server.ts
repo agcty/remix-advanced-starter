@@ -5,6 +5,8 @@ const schema = z.object({
   NODE_ENV: z.enum(["production", "development", "test"] as const),
   SESSION_SECRET: z.string(),
   DATABASE_URL: z.string(),
+  GOOGLE_CLIENT_ID: z.string(),
+  GOOGLE_CLIENT_SECRET: z.string(),
 })
 
 declare global {
