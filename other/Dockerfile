@@ -1,29 +1,46 @@
-FROM node:20-bookworm-slim as base
+# Specify exact version for reproducibility
+FROM node:20.11.1-bookworm-slim as base
 
-# Remix/Prisma app lives here
+# Use ARG for build-time variables
+ARG PNPM_VERSION=9.5.0
+ARG NODE_ENV=production
+
+# Set environment variables
+ENV NODE_ENV=$NODE_ENV
+
+# Install pnpm and set workdir
+RUN npm install -g pnpm@$PNPM_VERSION && \
+    mkdir -p /app && \
+    chown -R node:node /app
+
 WORKDIR /app
 
-# Set production environment
-ENV NODE_ENV="production"
+# Use non-root user
+USER node
 
-# Install pnpm
-ARG PNPM_VERSION=9.5.0
-RUN npm install -g pnpm@$PNPM_VERSION
-
-
-# Throw-away build stage to reduce size of final image
+# Build stage
 FROM base as build
 
-# Install packages needed to build node modules
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential node-gyp openssl pkg-config python-is-python3
+USER root
 
-# Install node modules
-COPY --link package.json pnpm-lock.yaml ./
+# Install build dependencies
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y \
+    build-essential \
+    node-gyp \
+    openssl \
+    pkg-config \
+    python-is-python3 && \
+    rm -rf /var/lib/apt/lists/*
+
+USER node
+
+# Copy package files and install dependencies
+COPY --chown=node:node package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile --prod=false
 
 # Copy application code
-COPY --link . .
+COPY --chown=node:node . .
 
 # Build application
 RUN pnpm run build
@@ -31,23 +48,28 @@ RUN pnpm run build
 # Remove development dependencies
 RUN pnpm prune --prod
 
-
-# Final stage for app image
+# Final stage
 FROM base
 
-# Install packages needed for deployment
+USER root
+
+# Install runtime dependencies
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y openssl sqlite3 && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+    apt-get install --no-install-recommends -y \
+    openssl \
+    sqlite3 && \
+    rm -rf /var/lib/apt/lists/*
+
+USER node
 
 # Copy built application
-COPY --from=build /app /app
+COPY --from=build --chown=node:node /app /app
 
-# Entrypoint prepares the database.
-# Not needed atm, only when we have a database, for migrations etc
-# ENTRYPOINT [ "/app/docker-entrypoint.js" ]
+# Add healthcheck
+# HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+#     CMD node healthcheck.js
 
-# Start the server by default, this can be overwritten at runtime
 EXPOSE 3000
-CMD [ "pnpm", "run", "start" ]
-# ENTRYPOINT [ "bash" ]
+
+# CMD ["bash"]
+CMD ["pnpm", "run", "start"]

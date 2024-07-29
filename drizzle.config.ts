@@ -9,6 +9,6 @@ export default defineConfig({
   out: "./db/out",
   dialect: "sqlite",
   dbCredentials: {
-    url: isProd ? "sqlite-prod.db" : "sqlite.db",
+    url: isProd ? "sqlite.db" : "sqlite.db",
   },
 })
