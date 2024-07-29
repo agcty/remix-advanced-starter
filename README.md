@@ -19,5 +19,13 @@ Run the following commands in project root:
 
 ```bash
 docker build -t remix-vite:latest -f other/Dockerfile .
-docker run -it --rm -p 3000:3000 --env-file .env -v ./sqlite.db:/app/sqlite.db remix-vite:latest 
+docker run -it --rm -p 3000:3000 --env-file .env -v ./sqlite.db:/app/sqlite.db remix-vite:latest
+```
+
+## Deploy to fly directly
+
+From project root
+
+```bash
+ fly deploy --dockerfile other/Dockerfile --remote-only
 ```
