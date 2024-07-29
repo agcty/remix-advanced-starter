@@ -2,10 +2,10 @@ import { startTransition } from "react"
 import { hydrateRoot } from "react-dom/client"
 import { RemixBrowser } from "@remix-run/react"
 
+if (ENV.MODE === "production" && ENV.SENTRY_DSN) {
+  void import("./utils/monitoring.client").then(({ init }) => init())
+}
+
 startTransition(() => {
-  hydrateRoot(
-    document,
-    // explicitly not using StrictMode here because it often causes more issues than it solves
-    <RemixBrowser />,
-  )
+  hydrateRoot(document, <RemixBrowser />)
 })

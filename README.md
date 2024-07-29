@@ -13,6 +13,11 @@ This is a starter project for Remix. It includes a few common configurations tha
 - **Ethereum Authentication** - This project is configured with Ethereum Authentication.
 - **Remix Flat Routes** - This project is configured with Flat Routes.
 
-## Non Features
+## Local Testing
 
-- **Deploy** - This project is not configured with a deployment strategy. You need to deploy it to wherever you want yourself.
+Run the following commands in project root:
+
+```bash
+docker build -t remix-vite:latest -f other/Dockerfile .
+docker run -it --rm -p 3000:3000 --env-file .env -v ./sqlite.db:/app/sqlite.db remix-vite:latest 
+```

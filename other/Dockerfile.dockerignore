@@ -1,0 +1,13 @@
+/node_modules
+*.log
+.DS_Store
+/.cache
+/public/build
+/build
+/server-build
+.env
+sqlite.db
+.git
+.vscode
+workflows
+.gitignore

@@ -29,8 +29,12 @@ module.exports = {
   overrides: [
     // React
     {
-      files: ["**/*.{js,jsx,ts,tsx}"],
+      files: ["**/*.{ts,tsx}"],
       plugins: ["react", "jsx-a11y", "simple-import-sort"],
+      parser: "@typescript-eslint/parser", // Add this line
+      parserOptions: {
+        project: "./tsconfig.json", // Add this line, adjust the path if needed
+      },
       rules: {
         "@typescript-eslint/consistent-type-imports": [
           "warn",
@@ -77,10 +81,8 @@ module.exports = {
         ],
         "import/resolver": {
           typescript: {
-            debug: true,
             alwaysTryTypes: true,
-            // TODO: put packages into packages folder and fix monorepo setup
-            project: ".",
+            project: "./tsconfig.json", // Adjust this path if needed
           },
         },
       },
@@ -91,17 +93,17 @@ module.exports = {
       files: ["**/*.{ts,tsx}"],
       plugins: ["@typescript-eslint", "import"],
       parser: "@typescript-eslint/parser",
+      parserOptions: {
+        project: "./tsconfig.json", // Add this line, adjust the path if needed
+      },
       settings: {
-        // "import/internal-regex": "^~/",
         "import/resolver": {
           node: {
             extensions: [".ts", ".tsx"],
           },
           typescript: {
-            debug: true,
             alwaysTryTypes: true,
-            // TODO: put packages into packages folder and fix monorepo setup
-            project: ".",
+            project: "./tsconfig.json", // Adjust this path if needed
           },
         },
       },
@@ -115,7 +117,14 @@ module.exports = {
 
     // Node
     {
-      files: [".eslintrc.cjs", "server.js", "other/sentry-create-release.js"],
+      files: [
+        ".eslintrc.cjs",
+        "monitoring.js",
+        "server.js",
+        "other/sentry-create-release.js",
+        "index.js",
+        "server/dev-server.js",
+      ],
       env: {
         node: true,
       },

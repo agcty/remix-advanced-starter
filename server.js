@@ -6,6 +6,12 @@ import morgan from "morgan"
 
 installGlobals()
 
+const IS_PROD = process.env.NODE_ENV === "production"
+
+if (IS_PROD && process.env.SENTRY_DSN) {
+  void import("./monitoring").then(({ init }) => init())
+}
+
 const viteDevServer =
   process.env.NODE_ENV === "production"
     ? undefined
