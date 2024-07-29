@@ -1,5 +1,5 @@
 {
-  "include": ["env.d.ts", "**/*.ts", "**/*.tsx", "vite.config.ts"],
+  "include": ["env.d.ts", "**/*.ts", "**/*.tsx", "vite.config.ts", "server.ts"],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "isolatedModules": true,
