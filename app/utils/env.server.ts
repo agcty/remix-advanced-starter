@@ -7,6 +7,9 @@ const schema = z.object({
   DATABASE_URL: z.string(),
   GOOGLE_CLIENT_ID: z.string(),
   GOOGLE_CLIENT_SECRET: z.string(),
+  ALLOW_INDEXING: z.enum(['true', 'false']).optional(),
+  // If you plan on using Sentry, uncomment this line
+	// SENTRY_DSN: z.string(),
 })
 
 declare global {
@@ -15,7 +18,7 @@ declare global {
   }
 }
 
-export function initEnv() {
+export function init() {
   const parsed = schema.safeParse(process.env)
 
   if (parsed.success === false) {
@@ -39,7 +42,9 @@ export function initEnv() {
  */
 export function getEnv() {
   return {
-    NODE_ENV: process.env.NODE_ENV,
+    MODE: process.env.NODE_ENV,
+    SENTRY_DSN: process.env.SENTRY_DSN,
+    ALLOW_INDEXING: process.env.ALLOW_INDEXING,
   }
 }
 
