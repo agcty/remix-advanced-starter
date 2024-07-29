@@ -1,24 +1,23 @@
-import { PassThrough } from "stream"
+import { renderToPipeableStream } from "react-dom/server"
 import {
-  createReadableStreamFromReadable,
-  type LoaderFunctionArgs,
   type ActionFunctionArgs,
+  createReadableStreamFromReadable,
   type HandleDocumentRequestFunction,
+  type LoaderFunctionArgs,
 } from "@remix-run/node"
 import { RemixServer } from "@remix-run/react"
 import * as Sentry from "@sentry/remix"
 import chalk from "chalk"
 import { isbot } from "isbot"
-import { renderToPipeableStream } from "react-dom/server"
-
+import { PassThrough } from "stream"
 import { getEnv, init } from "./utils/env.server"
-import { makeTimings } from "./utils/timing.server"
-
 import { NonceProvider } from "./utils/nonce-provider"
+import { makeTimings } from "./utils/timing.server"
 
 const ABORT_DELAY = 5000
 
 init()
+
 global.ENV = getEnv()
 
 type DocRequestArgs = Parameters<HandleDocumentRequestFunction>

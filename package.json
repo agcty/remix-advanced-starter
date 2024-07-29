@@ -6,7 +6,7 @@
   "scripts": {
     "build": "remix vite:build",
     "dev": "node ./server.js",
-    "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint --fix .",
+    "lint": "eslint --ignore-pattern .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
     "start": "cross-env NODE_ENV=production node ./server.js",
     "db:push": "pnpm drizzle-kit push",
     "typecheck": "tsc"
@@ -18,6 +18,7 @@
     "@epic-web/client-hints": "^1.3.2",
     "@epic-web/invariant": "^1.0.0",
     "@epic-web/remember": "^1.1.0",
+    "@eslint/compat": "^1.1.1",
     "@paralleldrive/cuid2": "^2.2.2",
     "@prisma/client": "^5.17.0",
     "@remix-run/express": "^2.10.3",
@@ -56,7 +57,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@eslint/js": "^9.8.0",
+    "@eslint/js": "^8.57.0",
     "@remix-run/dev": "^2.10.3",
     "@types/better-sqlite3": "^7.6.11",
     "@types/compression": "^1.7.5",
