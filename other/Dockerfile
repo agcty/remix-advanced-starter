@@ -42,8 +42,10 @@ RUN pnpm install --frozen-lockfile --prod=false
 # Copy application code
 COPY --chown=node:node . .
 
-# Build application
-RUN pnpm run build
+# Mount the secret and set it as an environment variable and run the build, at this point the sentry sourcemap will be uploaded and a release created
+RUN --mount=type=secret,id=SENTRY_AUTH_TOKEN \
+  export SENTRY_AUTH_TOKEN=$(cat /run/secrets/SENTRY_AUTH_TOKEN) && \
+  pnpm run build
 
 # Remove development dependencies
 RUN pnpm prune --prod
@@ -65,11 +67,6 @@ USER node
 # Copy built application
 COPY --from=build --chown=node:node /app /app
 
-# TODO: Add healthcheck
-# HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-#     CMD node healthcheck.js
-
 EXPOSE 3000
 
-# CMD ["bash"]
 CMD ["pnpm", "run", "start"]
