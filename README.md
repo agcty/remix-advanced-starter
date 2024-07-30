@@ -31,3 +31,16 @@ From project root
     # but we already have a toml file defined with the Dockerfile already set
     fly deploy
 ```
+
+## Debug docker locally
+
+```bash
+export SENTRY_AUTH_TOKEN="" export BUILDKIT_PROGRESS=plain
+DOCKER_BUILDKIT=1 docker build --no-cache \
+  --build-arg COMMIT_SHA=$(git rev-parse HEAD) \
+  --build-arg SENTRY_ORG=headly \
+  --build-arg SENTRY_PROJECT=remix-vite-test \
+  --secret id=SENTRY_AUTH_TOKEN,env=SENTRY_AUTH_TOKEN \
+  -f other/Dockerfile \
+  .
+```
