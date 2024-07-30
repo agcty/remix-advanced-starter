@@ -1,61 +1,101 @@
 import { relations, sql } from "drizzle-orm"
-import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core"
+import {
+  check,
+  index,
+  integer,
+  sqliteTable,
+  text,
+  unique,
+} from "drizzle-orm/sqlite-core"
 
-// Enums
-export const MembershipRole = {
-  OWNER: "OWNER",
-  ADMIN: "ADMIN",
-  USER: "USER",
-} as const
+// Changed from object literals to enums
+export enum MembershipRole {
+  OWNER = "OWNER",
+  ADMIN = "ADMIN",
+  USER = "USER",
+}
 
-export const GlobalRole = {
-  SUPERADMIN: "SUPERADMIN",
-  CUSTOMER: "CUSTOMER",
-} as const
-
-// Enum types
-// type MembershipRoleType = (typeof MembershipRole)[keyof typeof MembershipRole]
-// type GlobalRoleType = (typeof GlobalRole)[keyof typeof GlobalRole]
+export enum GlobalRole {
+  SUPERADMIN = "SUPERADMIN",
+  CUSTOMER = "CUSTOMER",
+}
 
 // Organization table
 export const organizations = sqliteTable("organizations", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
+  // Added createdAt and updatedAt fields
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 })
 
 // User table
-export const users = sqliteTable("users", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`CURRENT_TIMESTAMP`,
-  ),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-    sql`CURRENT_TIMESTAMP`,
-  ),
-  name: text("name"),
-  email: text("email").notNull().unique(),
-  role: text("role").notNull(),
-})
+export const users = sqliteTable(
+  "users",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    name: text("name"),
+    email: text("email").notNull().unique(),
+    role: text("role").$type<GlobalRole>().notNull(),
+    deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
+  },
+  table => ({
+    emailIdx: index("email_idx").on(table.email),
+    // Added check constraint for role values
+    checkRole: check(
+      "check_role_constraint",
+      sql`role IN ('SUPERADMIN', 'CUSTOMER')`,
+    ),
+  }),
+)
 
 // Membership table
 export const memberships = sqliteTable(
   "memberships",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
-    role: text("role").notNull(),
+    role: text("role").$type<MembershipRole>().notNull(),
     organizationId: integer("organization_id")
       .notNull()
-      .references(() => organizations.id),
-    userId: integer("user_id").references(() => users.id),
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    userId: integer("user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
     invitedName: text("invited_name"),
-    invitedEmail: text("invited_email"),
+    // Changed to be unique across all organizations
+    invitedEmail: text("invited_email").unique(),
+    // Added createdAt and updatedAt fields
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
   },
   table => ({
-    uniqueOrgEmail: unique().on(table.organizationId, table.invitedEmail),
+    // Removed uniqueOrgEmail constraint
+    // Added indexes for foreign keys
+    orgIdIdx: index("org_id_idx").on(table.organizationId),
+    userIdIdx: index("user_id_idx").on(table.userId),
+    // Added check constraint for role values
+    checkRole: check(
+      "check_role_constraint",
+      sql`role IN ('OWNER', 'ADMIN', 'USER')`,
+    ),
   }),
 )
 
-// Relations
+// Relations (unchanged)
 export const organizationsRelations = relations(organizations, ({ many }) => ({
   memberships: many(memberships),
 }))
