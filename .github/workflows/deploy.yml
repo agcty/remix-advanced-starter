@@ -99,7 +99,7 @@ jobs:
       - name: 🚀 Deploy Staging
         if: ${{ github.ref == 'refs/heads/dev' }}
         run:
-          flyctl deploy --remote-only --build-arg COMMIT_SHA=${{ github.sha }}
+          fly deploy --remote-only --build-arg COMMIT_SHA=${{ github.sha }}
           --app ${{ steps.app_name.outputs.value }}-staging
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
@@ -107,6 +107,6 @@ jobs:
       - name: 🚀 Deploy Production
         if: ${{ github.ref == 'refs/heads/main' }}
         run:
-          flyctl deploy --remote-only --build-arg COMMIT_SHA=${{ github.sha }} --build-secret SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
+          fly deploy --remote-only --build-arg COMMIT_SHA=${{ github.sha }} --build-secret SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

@@ -27,5 +27,7 @@ docker run -it --rm -p 3000:3000 --env-file .env -v ./sqlite.db:/app/sqlite.db r
 From project root
 
 ```bash
- fly deploy --dockerfile other/Dockerfile --remote-only
+    fly deploy --dockerfile other/Dockerfile --remote-only # in case you want to deploy a specific Dockerfile
+    # but we already have a toml file defined with the Dockerfile already set
+    fly deploy
 ```
