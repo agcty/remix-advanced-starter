@@ -65,7 +65,7 @@ USER node
 # Copy built application
 COPY --from=build --chown=node:node /app /app
 
-# Add healthcheck
+# TODO: Add healthcheck
 # HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
 #     CMD node healthcheck.js
 
