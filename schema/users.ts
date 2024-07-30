@@ -1,14 +1,12 @@
 import { relations, sql } from "drizzle-orm"
 import {
   check,
-  index,
   integer,
   sqliteTable,
   text,
   unique,
 } from "drizzle-orm/sqlite-core"
 
-// Changed from object literals to enums
 export enum MembershipRole {
   OWNER = "OWNER",
   ADMIN = "ADMIN",
@@ -20,11 +18,9 @@ export enum GlobalRole {
   CUSTOMER = "CUSTOMER",
 }
 
-// Organization table
 export const organizations = sqliteTable("organizations", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
-  // Added createdAt and updatedAt fields
   createdAt: integer("created_at", { mode: "timestamp_ms" })
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
@@ -33,7 +29,6 @@ export const organizations = sqliteTable("organizations", {
     .default(sql`CURRENT_TIMESTAMP`),
 })
 
-// User table
 export const users = sqliteTable(
   "users",
   {
@@ -50,8 +45,6 @@ export const users = sqliteTable(
     deletedAt: integer("deleted_at", { mode: "timestamp_ms" }),
   },
   table => ({
-    emailIdx: index("email_idx").on(table.email),
-    // Added check constraint for role values
     checkRole: check(
       "check_role_constraint",
       sql`role IN ('SUPERADMIN', 'CUSTOMER')`,
@@ -59,7 +52,6 @@ export const users = sqliteTable(
   }),
 )
 
-// Membership table
 export const memberships = sqliteTable(
   "memberships",
   {
@@ -72,9 +64,7 @@ export const memberships = sqliteTable(
       onDelete: "set null",
     }),
     invitedName: text("invited_name"),
-    // Changed to be unique across all organizations
-    invitedEmail: text("invited_email").unique(),
-    // Added createdAt and updatedAt fields
+    invitedEmail: text("invited_email"),
     createdAt: integer("created_at", { mode: "timestamp_ms" })
       .notNull()
       .default(sql`CURRENT_TIMESTAMP`),
@@ -83,19 +73,17 @@ export const memberships = sqliteTable(
       .default(sql`CURRENT_TIMESTAMP`),
   },
   table => ({
-    // Removed uniqueOrgEmail constraint
-    // Added indexes for foreign keys
-    orgIdIdx: index("org_id_idx").on(table.organizationId),
-    userIdIdx: index("user_id_idx").on(table.userId),
-    // Added check constraint for role values
+    uniqueOrgEmail: unique("unique_org_email").on(
+      table.organizationId,
+      table.invitedEmail,
+    ),
     checkRole: check(
-      "check_role_constraint",
+      "check_membership_role_constraint",
       sql`role IN ('OWNER', 'ADMIN', 'USER')`,
     ),
   }),
 )
 
-// Relations (unchanged)
 export const organizationsRelations = relations(organizations, ({ many }) => ({
   memberships: many(memberships),
 }))
