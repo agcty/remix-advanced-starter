@@ -35,6 +35,7 @@ export default defineConfig({
     tsconfigPaths(),
     process.env.SENTRY_AUTH_TOKEN
       ? sentryVitePlugin({
+          debug: true,
           disable: MODE !== "production",
           authToken: process.env.SENTRY_AUTH_TOKEN,
           org: process.env.SENTRY_ORG,
