@@ -125,7 +125,6 @@ module.exports = {
         ".eslintrc.cjs",
         "monitoring.js",
         "server.js",
-        "other/sentry-create-release.js",
         "index.js",
         "server/dev-server.js",
       ],

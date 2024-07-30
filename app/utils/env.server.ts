@@ -18,7 +18,7 @@ const schema = z.object({
     .min(1, "GOOGLE_CLIENT_SECRET must not be empty"),
   ALLOW_INDEXING: z.enum(["true", "false"]).optional(),
   // If you plan on using Sentry, uncomment this line
-  // SENTRY_DSN: z.string(),
+  SENTRY_DSN: z.string(),
 })
 
 declare global {
