@@ -8,6 +8,7 @@ on:
 
 env:
   NODE_VERSION: "20"
+  SENTRY_ORG: ${{ secrets.SENTRY_AUTH }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -103,3 +104,5 @@ jobs:
         run: flyctl deploy --remote-only --build-arg COMMIT_SHA=${{ github.sha }} --build-secret SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
