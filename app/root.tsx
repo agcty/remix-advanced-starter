@@ -12,6 +12,7 @@ import {
 } from "@remix-run/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { cookieToInitialState, WagmiProvider } from "wagmi"
+import { GeneralErrorBoundary } from "./components/error-boundary"
 import { useTheme } from "./routes/api+/theme-switch"
 import Toaster from "./routes/components/Toast"
 import { config } from "./utils/chain-config"
@@ -124,5 +125,24 @@ function Document({
         <Scripts nonce={nonce} />
       </body>
     </html>
+  )
+}
+
+export function ErrorBoundary() {
+  // the nonce doesn't rely on the loader so we can access that
+  const nonce = useNonce()
+
+  // NOTE: you cannot use useLoaderData in an ErrorBoundary because the loader
+  // likely failed to run so we have to do the best we can.
+  // We could probably do better than this (it's possible the loader did run).
+  // This would require a change in Remix.
+
+  // Just make sure your root route never errors out and you'll always be able
+  // to give the user a better UX.
+
+  return (
+    <Document nonce={nonce}>
+      <GeneralErrorBoundary />
+    </Document>
   )
 }

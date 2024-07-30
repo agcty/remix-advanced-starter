@@ -8,7 +8,7 @@ export function init() {
     tracesSampleRate: process.env.NODE_ENV === "production" ? 1 : 0,
     autoInstrumentRemix: true,
     denyUrls: [
-      /\/resources\/healthcheck/,
+      /\/api\/healthcheck/,
       // TODO: be smarter about the public assets...
       /\/build\//,
       /\/favicons\//,
@@ -20,7 +20,7 @@ export function init() {
     integrations: [httpIntegration(), nodeProfilingIntegration()],
     tracesSampler(samplingContext) {
       // ignore healthcheck transactions by other services (consul, etc.)
-      if (samplingContext.request?.url?.includes("/resources/healthcheck")) {
+      if (samplingContext.request?.url?.includes("/api/healthcheck")) {
         return 0
       }
       return 1

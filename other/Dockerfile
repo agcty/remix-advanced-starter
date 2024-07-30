@@ -10,18 +10,23 @@ ENV NODE_ENV=$NODE_ENV
 
 # Install pnpm and set workdir
 RUN npm install -g pnpm@$PNPM_VERSION && \
-    mkdir -p /app && \
-    chown -R node:node /app
+    mkdir -p /app
 
 WORKDIR /app
-
-# Use non-root user
-USER node
 
 # Build stage
 FROM base as build
 
-USER root
+ARG COMMIT_SHA
+ENV COMMIT_SHA=$COMMIT_SHA
+
+# Use the following environment variables to configure Sentry
+ARG SENTRY_AUTH_TOKEN
+ARG SENTRY_ORG
+ARG SENTRY_PROJECT
+
+ENV SENTRY_ORG=$SENTRY_ORG
+ENV SENTRY_PROJECT=$SENTRY_PROJECT
 
 # Install build dependencies
 RUN apt-get update -qq && \
@@ -30,30 +35,39 @@ RUN apt-get update -qq && \
     node-gyp \
     openssl \
     pkg-config \
-    python-is-python3 && \
+    python-is-python3 \
+    ca-certificates && \
+    update-ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-USER node
 
 # Copy package files and install dependencies
-COPY --chown=node:node package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile --prod=false
 
 # Copy application code
-COPY --chown=node:node . .
+COPY . .
 
-# Mount the secret and set it as an environment variable and run the build, at this point the sentry sourcemap will be uploaded and a release created
+# Mount the secret, set it as an environment variable, and run the build
 RUN --mount=type=secret,id=SENTRY_AUTH_TOKEN \
-  export SENTRY_AUTH_TOKEN=$(cat /run/secrets/SENTRY_AUTH_TOKEN) && \
-  pnpm run build
+    export SENTRY_AUTH_TOKEN=$(cat /run/secrets/SENTRY_AUTH_TOKEN) && \
+    echo "SENTRY_AUTH_TOKEN is now set: $(if [ -n "$SENTRY_AUTH_TOKEN" ]; then echo 'Yes'; else echo 'No'; fi)" && \
+    echo "SENTRY_ORG: $SENTRY_ORG" && \
+    echo "SENTRY_PROJECT: $SENTRY_PROJECT" && \
+    echo "COMMIT_SHA: $COMMIT_SHA" && \
+    echo "Node version: $(node --version)" && \
+    echo "NPM version: $(npm --version)" && \
+    echo "PNPM version: $(pnpm --version)" && \
+    # Set Sentry log level to debug
+    # export SENTRY_LOG_LEVEL=debug && \
+    # Run the build
+    pnpm run build
 
 # Remove development dependencies
 RUN pnpm prune --prod
 
 # Final stage
 FROM base
-
-USER root
 
 # Install runtime dependencies
 RUN apt-get update -qq && \
@@ -62,10 +76,8 @@ RUN apt-get update -qq && \
     sqlite3 && \
     rm -rf /var/lib/apt/lists/*
 
-USER node
-
 # Copy built application
-COPY --from=build --chown=node:node /app /app
+COPY --from=build /app /app
 
 EXPOSE 3000
 

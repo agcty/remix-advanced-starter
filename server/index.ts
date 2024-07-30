@@ -17,7 +17,7 @@ const IS_DEV = MODE === "development"
 const ALLOW_INDEXING = process.env.ALLOW_INDEXING !== "false"
 
 if (IS_PROD && process.env.SENTRY_DSN) {
-  void import("./utils/monitoring.js").then(({ init }) => init())
+  void import("./utils/monitoring").then(({ init }) => init())
 }
 
 const viteDevServer = IS_PROD

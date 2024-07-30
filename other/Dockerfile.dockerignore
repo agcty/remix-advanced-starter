@@ -7,7 +7,7 @@
 /server-build
 .env
 sqlite.db
-.git
 .vscode
 workflows
 .gitignore
+/docs
