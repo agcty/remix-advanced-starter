@@ -21,7 +21,6 @@ ARG COMMIT_SHA
 ENV COMMIT_SHA=$COMMIT_SHA
 
 # Use the following environment variables to configure Sentry
-ARG SENTRY_AUTH_TOKEN
 ARG SENTRY_ORG
 ARG SENTRY_PROJECT
 
