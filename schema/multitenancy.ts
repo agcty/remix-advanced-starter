@@ -19,19 +19,27 @@ import { connections, passwords, sessions } from "./auth"
 export const organizations = sqliteTable("multitenancy_organizations", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 })
 
 export const users = sqliteTable("multitenancy_users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  createdAt: integer("created_at", { mode: "timestamp" }).default(
-    sql`CURRENT_TIMESTAMP`,
-  ),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).default(
-    sql`CURRENT_TIMESTAMP`,
-  ),
   name: text("name"),
   email: text("email").notNull().unique(),
-  globalRole: text("global_role").notNull().default("CUSTOMER"),
+  globalRole: text("global_role", { enum: ["SUPERADMIN", "CUSTOMER"] })
+    .notNull()
+    .default("CUSTOMER"),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 })
 
 export const memberships = sqliteTable(
@@ -44,6 +52,12 @@ export const memberships = sqliteTable(
     userId: integer("user_id").references(() => users.id),
     invitedName: text("invited_name"),
     invitedEmail: text("invited_email"),
+    createdAt: integer("created_at", { mode: "timestamp" })
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
   },
   table => ({
     uniqueOrgEmail: unique().on(table.organizationId, table.invitedEmail),
@@ -54,9 +68,11 @@ export const permissions = sqliteTable(
   "multitenancy_permissions",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
-    action: text("action").notNull(),
+    action: text("action", {
+      enum: ["create", "read", "update", "delete"],
+    }).notNull(),
     entity: text("entity").notNull(),
-    access: text("access").notNull(),
+    access: text("access", { enum: ["own", "any"] }).notNull(),
     description: text("description").default(""),
   },
   table => ({
@@ -150,3 +166,6 @@ export const insertPermissionSchema = createInsertSchema(permissions, {
 })
 
 export const insertRoleSchema = createInsertSchema(roles)
+
+// AI Questions to ask
+// Does this drizzle schema adhere to the best practices and the schema description?
