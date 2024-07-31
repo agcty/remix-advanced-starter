@@ -1,17 +1,16 @@
 import { sql } from "drizzle-orm"
 import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core"
 import { createInsertSchema } from "drizzle-zod"
-import { z } from "zod"
-import { permissions, users } from "./multitenancy"
+import { users } from "./multitenancy"
 
-export const passwords = sqliteTable("passwords", {
+export const passwords = sqliteTable("auth_passwords", {
   userId: integer("user_id")
     .primaryKey()
     .references(() => users.id),
   hash: text("hash").notNull(),
 })
 
-export const sessions = sqliteTable("sessions", {
+export const sessions = sqliteTable("auth_sessions", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id")
     .notNull()
@@ -23,7 +22,7 @@ export const sessions = sqliteTable("sessions", {
 })
 
 export const verifications = sqliteTable(
-  "verifications",
+  "auth_verifications",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     createdAt: integer("created_at", { mode: "timestamp" }).default(
@@ -44,7 +43,7 @@ export const verifications = sqliteTable(
 )
 
 export const connections = sqliteTable(
-  "connections",
+  "auth_connections",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     userId: integer("user_id")
