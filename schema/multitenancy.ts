@@ -16,12 +16,12 @@ import { connections, passwords, sessions } from "./auth"
 // For a real-world example, think of a platform like LinkedIn, where the user has a global account but can be part of multiple companies or groups and have specific permissions in each of those.
 // In some organizations, they might be an admin, in others a moderator, and in others simply a basic user.
 
-export const organizations = sqliteTable("organizations", {
+export const organizations = sqliteTable("multitenancy_organizations", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
 })
 
-export const users = sqliteTable("users", {
+export const users = sqliteTable("multitenancy_users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`CURRENT_TIMESTAMP`,
@@ -35,7 +35,7 @@ export const users = sqliteTable("users", {
 })
 
 export const memberships = sqliteTable(
-  "memberships",
+  "multitenancy_memberships",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     organizationId: integer("organization_id")
@@ -51,7 +51,7 @@ export const memberships = sqliteTable(
 )
 
 export const permissions = sqliteTable(
-  "permissions",
+  "multitenancy_permissions",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     action: text("action").notNull(),
@@ -64,14 +64,14 @@ export const permissions = sqliteTable(
   }),
 )
 
-export const roles = sqliteTable("roles", {
+export const roles = sqliteTable("multitenancy_roles", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull().unique(),
   description: text("description").default(""),
 })
 
 export const rolePermissions = sqliteTable(
-  "role_permissions",
+  "multitenancy_role_permissions",
   {
     roleId: integer("role_id")
       .notNull()
@@ -86,7 +86,7 @@ export const rolePermissions = sqliteTable(
 )
 
 export const membershipRoles = sqliteTable(
-  "membership_roles",
+  "multitenancy_membership_roles",
   {
     membershipId: integer("membership_id")
       .notNull()
