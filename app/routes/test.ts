@@ -1,5 +1,5 @@
 import { json } from "@remix-run/node"
-import { organizations, users } from "schema/users"
+import { organizations, users } from "schema/multitenancy"
 import { createUserWithOrganization } from "~/utils/create-user.server"
 import { db } from "~/utils/db.server"
 import { makeTimings, time } from "~/utils/timing.server"
@@ -7,12 +7,16 @@ import { redirectWithToast } from "~/utils/toaster.server"
 
 export async function loader() {
   // insert into organizations (name) values ('test')
-  //   await createUserWithOrganization({
-  //     name: "test",
-  //     email: "hello@dsf.coms",
-  //     organizationName: "test",
-  //   })
-  await db.insert(users).values({ email: "test@asdf.com", role: "CUSTOMER" })
+  createUserWithOrganization({
+    user: {
+      email: "alex@gogl.io",
+      role: "SUPERADMIN",
+      name: "Alex",
+    },
+    organizationName: "test",
+  })
+
+  // await db.insert(users).values({ email: "test@asdf.com", role: "CUSTOMER" })
   const timings = makeTimings("test loader")
 
   const data = await time(() => db.select().from(users), {

@@ -1,7 +1,8 @@
 import { relations, sql } from "drizzle-orm"
 import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core"
+import { createInsertSchema } from "drizzle-zod"
+import { z } from "zod"
 
-// Enums
 export const MembershipRole = {
   OWNER: "OWNER",
   ADMIN: "ADMIN",
@@ -13,17 +14,11 @@ export const GlobalRole = {
   CUSTOMER: "CUSTOMER",
 } as const
 
-// Enum types
-// type MembershipRoleType = (typeof MembershipRole)[keyof typeof MembershipRole]
-// type GlobalRoleType = (typeof GlobalRole)[keyof typeof GlobalRole]
-
-// Organization table
 export const organizations = sqliteTable("organizations", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
 })
 
-// User table
 export const users = sqliteTable("users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   createdAt: integer("created_at", { mode: "timestamp" }).default(
@@ -37,7 +32,6 @@ export const users = sqliteTable("users", {
   role: text("role").notNull(),
 })
 
-// Membership table
 export const memberships = sqliteTable(
   "memberships",
   {
@@ -55,7 +49,6 @@ export const memberships = sqliteTable(
   }),
 )
 
-// Relations
 export const organizationsRelations = relations(organizations, ({ many }) => ({
   memberships: many(memberships),
 }))
@@ -74,3 +67,20 @@ export const membershipsRelations = relations(memberships, ({ one }) => ({
     references: [users.id],
   }),
 }))
+
+export const insertUserSchema = createInsertSchema(users, {
+  email: schema => schema.email.email(),
+  role: z
+    .enum([GlobalRole.SUPERADMIN, GlobalRole.CUSTOMER])
+    .default(GlobalRole.CUSTOMER),
+})
+
+export const insertOrganizationSchema = createInsertSchema(organizations)
+
+export const insertMembershipSchema = createInsertSchema(memberships, {
+  role: z.enum([
+    MembershipRole.OWNER,
+    MembershipRole.ADMIN,
+    MembershipRole.USER,
+  ]),
+})

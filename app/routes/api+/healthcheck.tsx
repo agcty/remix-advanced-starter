@@ -1,7 +1,7 @@
 // learn more: https://fly.io/docs/reference/configuration/#services-http_checks
 import { type LoaderFunctionArgs } from "@remix-run/node"
 import { count } from "drizzle-orm"
-import { organizations } from "schema/users"
+import { organizations } from "schema/multitenancy"
 import { db } from "~/utils/db.server"
 
 export async function loader({ request }: LoaderFunctionArgs) {
