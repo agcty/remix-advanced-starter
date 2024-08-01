@@ -11,6 +11,9 @@ import {
   useNavigate,
 } from "@remix-run/react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { db } from "db.server"
+import { eq } from "drizzle-orm"
+import { users } from "schema/multitenancy"
 import { cookieToInitialState, WagmiProvider } from "wagmi"
 import { GeneralErrorBoundary } from "./components/error-boundary"
 import { useTheme } from "./routes/api+/theme-switch"
@@ -35,7 +38,9 @@ export const loader: LoaderFunction = async ({ request }) => {
     ?.trim()
 
   const { toast, headers: toastHeaders } = await getToast(request)
-  const timings = makeTimings("root loader")
+  const timings = makeTimings("get user")
+
+  const user = await db.select().from(users).where(eq(users.id, 1)).get()
 
   return json(
     {
@@ -49,6 +54,7 @@ export const loader: LoaderFunction = async ({ request }) => {
           theme: getTheme(request),
         },
       },
+      user,
       toast,
     },
     {
