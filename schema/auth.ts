@@ -35,7 +35,7 @@ export const sessions = sqliteTable(
     ),
   },
   table => ({
-    userIdIdx: index("user_id_idx").on(table.userId),
+    userIdIdx: index("user_sessions_id_idx").on(table.userId),
   }),
 )
 
