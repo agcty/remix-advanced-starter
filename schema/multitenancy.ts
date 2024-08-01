@@ -6,7 +6,7 @@ import {
   text,
   unique,
 } from "drizzle-orm/sqlite-core"
-import { createInsertSchema } from "drizzle-zod"
+import { createInsertSchema, createSelectSchema } from "drizzle-zod"
 import { z } from "zod"
 import { connections, passwords, sessions } from "./auth"
 
@@ -31,6 +31,9 @@ export const users = sqliteTable("multitenancy_users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name"),
   email: text("email").notNull().unique(),
+  activeOrganizationId: integer("active_organization_id")
+    .notNull()
+    .references(() => organizations.id),
   globalRole: text("global_role", { enum: ["SUPERADMIN", "CUSTOMER"] })
     .notNull()
     .default("CUSTOMER"),
@@ -155,6 +158,8 @@ export const insertUserSchema = createInsertSchema(users, {
   email: schema => schema.email.email(),
   globalRole: z.enum(["SUPERADMIN", "CUSTOMER"]).default("CUSTOMER"),
 })
+
+export const selectUserSchema = createSelectSchema(users)
 
 export const insertOrganizationSchema = createInsertSchema(organizations)
 

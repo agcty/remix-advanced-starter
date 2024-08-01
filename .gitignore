@@ -4,4 +4,4 @@ node_modules
 /build
 .env
 /server-build
-sqlite.db
+*.db

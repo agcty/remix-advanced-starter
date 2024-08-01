@@ -10,13 +10,13 @@ import * as Sentry from "@sentry/remix"
 import chalk from "chalk"
 import { isbot } from "isbot"
 import { PassThrough } from "stream"
-import { getEnv, init } from "./utils/env.server"
+import { getEnv, initEnv } from "./utils/env.server"
 import { NonceProvider } from "./utils/nonce-provider"
 import { makeTimings } from "./utils/timing.server"
 
 const ABORT_DELAY = 5000
 
-init()
+initEnv()
 
 global.ENV = getEnv()
 
