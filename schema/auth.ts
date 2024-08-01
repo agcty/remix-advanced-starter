@@ -1,5 +1,11 @@
 import { sql } from "drizzle-orm"
-import { integer, sqliteTable, text, unique } from "drizzle-orm/sqlite-core"
+import {
+  index,
+  integer,
+  sqliteTable,
+  text,
+  unique,
+} from "drizzle-orm/sqlite-core"
 import { createInsertSchema } from "drizzle-zod"
 import { users } from "./multitenancy"
 
@@ -8,18 +14,30 @@ export const passwords = sqliteTable("auth_passwords", {
     .primaryKey()
     .references(() => users.id),
   hash: text("hash").notNull(),
-})
-
-export const sessions = sqliteTable("auth_sessions", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  userId: integer("user_id")
-    .notNull()
-    .references(() => users.id),
-  expirationDate: integer("expiration_date", { mode: "timestamp" }).notNull(),
   createdAt: integer("created_at", { mode: "timestamp" }).default(
     sql`CURRENT_TIMESTAMP`,
   ),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).default(
+    sql`CURRENT_TIMESTAMP`,
+  ),
 })
+
+export const sessions = sqliteTable(
+  "auth_sessions",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id),
+    expirationDate: integer("expiration_date", { mode: "timestamp" }).notNull(),
+    createdAt: integer("created_at", { mode: "timestamp" }).default(
+      sql`CURRENT_TIMESTAMP`,
+    ),
+  },
+  table => ({
+    userIdIdx: index("user_id_idx").on(table.userId),
+  }),
+)
 
 export const verifications = sqliteTable(
   "auth_verifications",
@@ -39,6 +57,7 @@ export const verifications = sqliteTable(
   },
   table => ({
     unq: unique().on(table.target, table.type),
+    targetIdx: index("target_idx").on(table.target),
   }),
 )
 
@@ -54,9 +73,13 @@ export const connections = sqliteTable(
     createdAt: integer("created_at", { mode: "timestamp" }).default(
       sql`CURRENT_TIMESTAMP`,
     ),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).default(
+      sql`CURRENT_TIMESTAMP`,
+    ),
   },
   table => ({
     unq: unique().on(table.providerName, table.providerId),
+    userIdIdx: index("user_id_idx").on(table.userId),
   }),
 )
 
