@@ -1,6 +1,6 @@
 import * as schema from "schema/multitenancy"
 import { z } from "zod"
-import { db } from "./db.server"
+import { db } from "../../db.server"
 
 const createUserWithOrganizationSchema = z.object({
   user: schema.insertUserSchema.omit({

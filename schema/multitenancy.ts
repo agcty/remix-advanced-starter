@@ -167,5 +167,5 @@ export const insertPermissionSchema = createInsertSchema(permissions, {
 
 export const insertRoleSchema = createInsertSchema(roles)
 
-// AI Questions to ask
+// AI Questions you can ask to understand this file better:
 // Does this drizzle schema adhere to the best practices and the schema description?
