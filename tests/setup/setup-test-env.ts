@@ -1,7 +1,6 @@
 import { connection } from "db.server"
 import { afterAll, afterEach, beforeAll, beforeEach } from "vitest"
-import { cleanup, seed } from "../../other/seed"
-import { teardown } from "./global-setup"
+import { seed, teardown } from "../../other/seed"
 
 beforeAll(async () => {})
 
@@ -10,7 +9,7 @@ beforeEach(async () => {
 })
 
 afterEach(async () => {
-  await cleanup()
+  await teardown()
 })
 
 afterAll(async () => {
