@@ -12,10 +12,8 @@ export default defineConfig({
     globalSetup: ["./tests/setup/global-setup.ts"],
     setupFiles: ["./tests/setup/setup-test-env.ts"],
     restoreMocks: true,
-    // env: {
-    //   DATABASE_URL: `${BASE_DATABASE_PATH}`,
-    //   qert: "qwert",
-    // },
+    // As we are using SQLite in-memory database, we need to run tests sequentially to avoid conflicts with setup and teardown
+    fileParallelism: false,
     coverage: {
       include: ["**/*.{ts,tsx}"],
       all: true,

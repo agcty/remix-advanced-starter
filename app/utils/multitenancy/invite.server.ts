@@ -3,7 +3,6 @@ import { and, eq, isNull } from "drizzle-orm"
 import * as schema from "schema/multitenancy"
 import {
   addRoleToMembership,
-  createMembership,
   createPendingMembership,
 } from "./membership.server"
 

@@ -1,4 +1,5 @@
 import "dotenv/config"
-import { seed } from "./seed"
+import { seed, teardown } from "./seed"
 
-seed()
+await seed()
+await teardown()

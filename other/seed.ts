@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from "db.server"
-import { and, eq } from "drizzle-orm"
-import * as schema from "../schema/multitenancy"
+import { and, eq, sql } from "drizzle-orm"
+import { type SQLiteTableWithColumns } from "drizzle-orm/sqlite-core"
+import * as schema from "schema"
 
 export async function seed(): Promise<void> {
   try {
@@ -238,12 +239,16 @@ export async function teardown() {
       await tx.delete(schema.membershipRoles).execute()
       await tx.delete(schema.rolePermissions).execute()
       await tx.delete(schema.memberships).execute()
+      await tx.delete(schema.connections).execute()
+      await tx.delete(schema.sessions).execute()
+      await tx.delete(schema.passwords).execute()
+      await tx.delete(schema.verifications).execute()
       await tx.delete(schema.users).execute()
       await tx.delete(schema.organizations).execute()
       await tx.delete(schema.roles).execute()
       await tx.delete(schema.permissions).execute()
 
-      // If you have other tables, add them here in the appropriate order
+      tx.run(sql`DELETE FROM sqlite_sequence`)
 
       console.log("Database cleanup completed successfully")
     } catch (error) {

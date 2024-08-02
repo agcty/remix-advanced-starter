@@ -84,7 +84,6 @@ describe("Invitations", () => {
         userId: user2.id,
       })
 
-      // check
       expect(acceptedMembership).toBeDefined()
       expect(acceptedMembership.userId).toBe(user2.id)
       expect(acceptedMembership.invitedEmail).toBeNull()
