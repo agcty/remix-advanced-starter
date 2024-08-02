@@ -115,3 +115,34 @@ export async function acceptInvitation({
     }
   })
 }
+
+export async function listInvitations({ email }: { email: string }) {
+  const invitations = await db.query.memberships.findMany({
+    where: and(
+      eq(schema.memberships.invitedEmail, email),
+      isNull(schema.memberships.userId),
+    ),
+    with: {
+      organization: true,
+      roles: {
+        with: {
+          role: true,
+        },
+      },
+    },
+  })
+
+  // Transform the result to a more user-friendly format
+  return invitations.map(invitation => ({
+    id: invitation.id,
+    organization: {
+      id: invitation.organization.id,
+      name: invitation.organization.name,
+    },
+    roles: invitation.roles.map(role => ({
+      id: role.role.id,
+      name: role.role.name,
+    })),
+    invitedAt: invitation.createdAt,
+  }))
+}

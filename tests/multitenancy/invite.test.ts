@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest"
 import {
   acceptInvitation,
   inviteUserToOrganization,
+  listInvitations,
 } from "~/utils/multitenancy/invite.server"
 import { createUserWithOrganization } from "~/utils/multitenancy/user.server"
 
@@ -159,6 +160,87 @@ describe("Invitations", () => {
           userId: 999,
         }),
       ).rejects.toThrowError("User not found")
+    })
+  })
+
+  describe("listInvitations", () => {
+    it("should list all pending invitations for a given email", async () => {
+      // Create a user and their organization
+      const { user: user1, organization: organization1 } =
+        await createUserWithOrganization({
+          user: { name: "Test User 1", email: "list-invite-test1@example.com" },
+          organizationName: "Test Org 1",
+        })
+
+      // Create additional organizations to invite the user to
+      const { organization: organization2 } = await createUserWithOrganization({
+        user: { name: "Test User 2", email: "list-invite-test2@example.com" },
+        organizationName: "Test Org 2",
+      })
+
+      const { organization: organization3 } = await createUserWithOrganization({
+        user: { name: "Test User 3", email: "list-invite-test3@example.com" },
+        organizationName: "Test Org 3",
+      })
+
+      // Invite user1 to organization2 and organization3
+      await inviteUserToOrganization({
+        email: user1.email,
+        organizationId: organization2.id,
+        roleName: "MEMBER",
+      })
+
+      await inviteUserToOrganization({
+        email: user1.email,
+        organizationId: organization3.id,
+        roleName: "ADMIN",
+      })
+
+      // List invitations for user1
+      const invitations = await listInvitations({ email: user1.email })
+
+      // Verify the invitations
+      expect(invitations).toHaveLength(2)
+
+      expect(invitations).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            organization: expect.objectContaining({
+              id: organization2.id,
+              name: organization2.name,
+            }),
+            roles: expect.arrayContaining([
+              expect.objectContaining({
+                name: "MEMBER",
+              }),
+            ]),
+          }),
+          expect.objectContaining({
+            organization: expect.objectContaining({
+              id: organization3.id,
+              name: organization3.name,
+            }),
+            roles: expect.arrayContaining([
+              expect.objectContaining({
+                name: "ADMIN",
+              }),
+            ]),
+          }),
+        ]),
+      )
+
+      // Verify each invitation has an id and invitedAt date
+      invitations.forEach(invitation => {
+        expect(invitation.id).toBeDefined()
+        expect(invitation.invitedAt).toBeInstanceOf(Date)
+      })
+    })
+
+    it("should return an empty array when there are no invitations", async () => {
+      const noInvitationsEmail = "no-invitations@example.com"
+      const invitations = await listInvitations({ email: noInvitationsEmail })
+
+      expect(invitations).toEqual([])
     })
   })
 })
