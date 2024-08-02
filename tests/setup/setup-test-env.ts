@@ -1,8 +1,6 @@
 import { connection } from "db.server"
-import { afterAll, afterEach, beforeAll, beforeEach } from "vitest"
+import { afterAll, afterEach, beforeEach } from "vitest"
 import { seed, teardown } from "../../other/seed"
-
-beforeAll(async () => {})
 
 beforeEach(async () => {
   await seed()

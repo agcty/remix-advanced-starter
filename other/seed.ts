@@ -1,232 +1,234 @@
-import { connection, db } from "db.server"
-import { and, eq, sql } from "drizzle-orm"
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { db } from "db.server"
+import { and, eq } from "drizzle-orm"
 import * as schema from "../schema/multitenancy"
 
-export async function seed() {
-  console.log("DATABASE_URL_SEED:", process.env.DATABASE_URL)
+export async function seed(): Promise<void> {
   try {
-    // Seed Organizations
-    const [org1, org2] = await db
-      .insert(schema.organizations)
-      .values([{ name: "Acme Corporation" }, { name: "Globex Corporation" }])
-      .returning()
+    // Create basic roles and permissions: OWNER, ADMIN, MEMBER
+    const roles = await createDefaultRoles()
+    const permissions = await createDefaultPermissions()
+    await createRolePermissions({ roles, permissions })
 
-    // Seed Users
-    const [user1, user2, user3] = await db
-      .insert(schema.users)
-      .values([
-        {
-          name: "John Doe",
-          email: "john@example.com",
-          globalRole: "CUSTOMER",
-          activeOrganizationId: org1.id,
-        },
-        {
-          name: "Jane Smith",
-          email: "jane@example.com",
-          globalRole: "CUSTOMER",
-          activeOrganizationId: org1.id,
-        },
-        {
-          name: "Admin User",
-          email: "admin@example.com",
-          globalRole: "SUPERADMIN",
-          activeOrganizationId: org2.id,
-        },
-      ])
-      .returning()
-
-    // Seed Memberships
-    const [membership1, membership2, membership3, membership4] = await db
-      .insert(schema.memberships)
-      .values([
-        { organizationId: org1.id, userId: user1.id },
-        { organizationId: org1.id, userId: user2.id },
-        { organizationId: org2.id, userId: user1.id },
-        { organizationId: org2.id, userId: user3.id },
-      ])
-      .returning()
-
-    // Seed Permissions
-    const permissionValues = [
-      {
-        action: "create",
-        entity: "user",
-        access: "any",
-        description: "Create any user",
-      },
-      {
-        action: "read",
-        entity: "user",
-        access: "any",
-        description: "Read any user",
-      },
-      {
-        action: "update",
-        entity: "user",
-        access: "any",
-        description: "Update any user",
-      },
-      {
-        action: "delete",
-        entity: "user",
-        access: "any",
-        description: "Delete any user",
-      },
-      {
-        action: "create",
-        entity: "organization",
-        access: "any",
-        description: "Create organization",
-      },
-      {
-        action: "read",
-        entity: "organization",
-        access: "any",
-        description: "Read organization",
-      },
-      {
-        action: "update",
-        entity: "organization",
-        access: "any",
-        description: "Update organization",
-      },
-      {
-        action: "delete",
-        entity: "organization",
-        access: "any",
-        description: "Delete organization",
-      },
-      {
-        action: "create",
-        entity: "post",
-        access: "own",
-        description: "Create own post",
-      },
-      {
-        action: "read",
-        entity: "post",
-        access: "any",
-        description: "Read any post",
-      },
-      {
-        action: "update",
-        entity: "post",
-        access: "own",
-        description: "Update own post",
-      },
-      {
-        action: "delete",
-        entity: "post",
-        access: "own",
-        description: "Delete own post",
-      },
-      {
-        action: "update",
-        entity: "post",
-        access: "any",
-        description: "Update any post",
-      },
-      {
-        action: "delete",
-        entity: "post",
-        access: "any",
-        description: "Delete any post",
-      },
-    ]
-
-    const permissions = await Promise.all(
-      permissionValues.map(async perm => {
-        const existingPerm = await db
-          .select()
-          .from(schema.permissions)
-          .where(
-            and(
-              eq(schema.permissions.action, perm.action),
-              eq(schema.permissions.entity, perm.entity),
-              eq(schema.permissions.access, perm.access),
-            ),
-          )
-          .limit(1)
-
-        if (existingPerm.length > 0) {
-          return existingPerm[0]
-        } else {
-          const [newPerm] = await db
-            .insert(schema.permissions)
-            .values(perm)
-            .returning()
-          return newPerm
-        }
-      }),
-    )
-
-    // Seed Roles
-    const [ownerRole, adminRole, memberRole] = await db
-      .insert(schema.roles)
-      .values([
-        {
-          name: "OWNER",
-          description: "Organization owner with full permissions",
-        },
-        { name: "ADMIN", description: "Administrator role" },
-        { name: "MEMBER", description: "Regular member role" },
-      ])
-      .returning()
-
-    // Define type-safe filtering functions
-    const isMemberAllowed = (
-      permission: (typeof permissions)[number],
-    ): boolean => {
-      return permission.action === "read" || permission.access === "own"
-    }
-
-    const isAdminAllowed = (
-      permission: (typeof permissions)[number],
-    ): boolean => {
-      return !(
-        permission.entity === "organization" && permission.action === "delete"
-      )
-    }
-
-    // Seed Role Permissions with improved type safety
-    const rolePermissions = permissions.flatMap(permission => {
-      const ownerPermission = {
-        roleId: ownerRole.id,
-        permissionId: permission.id,
-      }
-      const adminPermission = isAdminAllowed(permission)
-        ? { roleId: adminRole.id, permissionId: permission.id }
-        : null
-      const memberPermission = isMemberAllowed(permission)
-        ? { roleId: memberRole.id, permissionId: permission.id }
-        : null
-
-      return [ownerPermission, adminPermission, memberPermission].filter(
-        (p): p is NonNullable<typeof p> => p !== null,
-      )
-    })
-
-    await db.insert(schema.rolePermissions).values(rolePermissions)
-
-    // Seed Membership Roles
-    await db.insert(schema.membershipRoles).values([
-      { membershipId: membership1.id, roleId: ownerRole.id },
-      { membershipId: membership2.id, roleId: memberRole.id },
-      { membershipId: membership3.id, roleId: memberRole.id },
-      { membershipId: membership4.id, roleId: adminRole.id },
-    ])
+    // Create organizations, users, and memberships for testing
+    // const organizations = await createMockOrganizations({ amount: 2 })
+    // const users = await createMockUsers({ amount: 3, organizations })
+    // const memberships = await createMockMemberships({ users, organizations })
+    // await createMembershipRoles({ memberships, roles })
 
     console.log("Seeding completed successfully")
   } catch (error) {
     console.error("Error during seeding:", error)
   } finally {
     console.log("Exiting seeding function")
-    // connection.close()
   }
 }
 
-export async function cleanup() {
+async function createDefaultRoles() {
+  const rolesToCreate = [
+    { name: "OWNER", description: "Full access to organization resources" },
+    { name: "ADMIN", description: "Manage organization resources and users" },
+    { name: "MEMBER", description: "Basic access to organization resources" },
+  ]
+
+  const createdRoles = []
+
+  for (const role of rolesToCreate) {
+    try {
+      // Validate the role data
+      const validatedRole = schema.insertRoleSchema.parse(role)
+
+      // Check if the role already exists
+      const existingRole = await db.query.roles.findFirst({
+        where: eq(schema.roles.name, validatedRole.name),
+      })
+
+      if (existingRole) {
+        console.log(
+          `Role ${validatedRole.name} already exists, skipping creation`,
+        )
+        createdRoles.push(existingRole)
+      } else {
+        // Create the role
+        const [insertedRole] = await db
+          .insert(schema.roles)
+          .values(validatedRole)
+          .returning()
+        console.log(`Created role: ${insertedRole.name}`)
+        createdRoles.push(insertedRole)
+      }
+    } catch (error) {
+      console.error(`Error creating role ${role.name}:`, error)
+    }
+  }
+
+  return createdRoles
+}
+
+// Helper function to create permissions for a single entity
+async function createEntityPermissions(entity: string) {
+  const actions = ["create", "read", "update", "delete"] as const
+  const accessLevels = ["own", "any"] as const
+  const createdPermissions = []
+
+  for (const action of actions) {
+    for (const access of accessLevels) {
+      // Skip 'create' and 'delete' for 'own' access as they don't make sense
+      if ((action === "create" || action === "delete") && access === "own") {
+        continue
+      }
+
+      const permissionData = {
+        action,
+        entity,
+        access,
+        description: `${action} ${access} ${entity}`,
+      }
+
+      try {
+        // Validate the permission data
+        const validatedPermission =
+          schema.insertPermissionSchema.parse(permissionData)
+
+        // Check if the permission already exists
+        const existingPermission = await db.query.permissions.findFirst({
+          where: and(
+            eq(schema.permissions.action, validatedPermission.action),
+            eq(schema.permissions.entity, validatedPermission.entity),
+            eq(schema.permissions.access, validatedPermission.access),
+          ),
+        })
+
+        if (existingPermission) {
+          console.log(
+            `Permission ${validatedPermission.description} already exists, skipping creation`,
+          )
+          createdPermissions.push(existingPermission)
+        } else {
+          // Create the permission
+          const [insertedPermission] = await db
+            .insert(schema.permissions)
+            .values(validatedPermission)
+            .returning()
+          console.log(`Created permission: ${insertedPermission.description}`)
+          createdPermissions.push(insertedPermission)
+        }
+      } catch (error) {
+        console.error(
+          `Error creating permission ${permissionData.description}:`,
+          error,
+        )
+      }
+    }
+  }
+
+  return createdPermissions
+}
+
+// Main function to create all permissions
+async function createDefaultPermissions() {
+  const entities = ["user", "organization", "membership", "role"]
+  let allPermissions: any = []
+
+  for (const entity of entities) {
+    const entityPermissions = await createEntityPermissions(entity)
+    allPermissions = allPermissions.concat(entityPermissions)
+  }
+
+  return allPermissions
+}
+
+type Role = typeof schema.roles.$inferSelect
+type Permission = typeof schema.permissions.$inferSelect
+
+async function createRolePermissions({
+  roles,
+  permissions,
+}: {
+  roles: Role[]
+  permissions: Permission[]
+}) {
+  const rolePermissionsToCreate = [
+    {
+      roleName: "OWNER",
+      actions: ["create", "read", "update", "delete"],
+      access: ["own", "any"],
+    },
+    {
+      roleName: "ADMIN",
+      actions: ["create", "read", "update", "delete"],
+      access: ["own", "any"],
+    },
+    {
+      roleName: "MEMBER",
+      actions: ["create", "read", "update", "delete"],
+      access: ["own"],
+    },
+  ]
+
+  const rolePermissionValues: any = []
+
+  for (const rolePermission of rolePermissionsToCreate) {
+    const role = roles.find(r => r.name === rolePermission.roleName)
+    if (!role) {
+      console.error(`Role ${rolePermission.roleName} not found`)
+      continue
+    }
+
+    for (const action of rolePermission.actions) {
+      for (const access of rolePermission.access) {
+        const permission = permissions.find(
+          p => p.action === action && p.access === access,
+        )
+        if (!permission) {
+          console.error(
+            `Permission not found for action: ${action}, access: ${access}`,
+          )
+          continue
+        }
+
+        rolePermissionValues.push({
+          roleId: role.id,
+          permissionId: permission.id,
+        })
+      }
+    }
+  }
+
+  if (rolePermissionValues.length > 0) {
+    try {
+      // Use a transaction to ensure atomicity
+      await db.transaction(async tx => {
+        for (const value of rolePermissionValues) {
+          // Check if the role-permission association already exists
+          const existingRolePermission =
+            await tx.query.rolePermissions.findFirst({
+              where: and(
+                eq(schema.rolePermissions.roleId, value.roleId),
+                eq(schema.rolePermissions.permissionId, value.permissionId),
+              ),
+            })
+
+          if (!existingRolePermission) {
+            // If it doesn't exist, insert it
+            await tx.insert(schema.rolePermissions).values(value)
+            console.log(
+              `Created role-permission: Role ID ${value.roleId}, Permission ID ${value.permissionId}`,
+            )
+          } else {
+            console.log(
+              `Role-permission already exists: Role ID ${value.roleId}, Permission ID ${value.permissionId}`,
+            )
+          }
+        }
+      })
+    } catch (error) {
+      console.error("Error creating role permissions:", error)
+    }
+  }
+}
+
+export async function teardown() {
   console.log("🗑️ Emptying the database")
 
   // Start a transaction

@@ -1,13 +1,6 @@
 /* eslint-disable @typescript-eslint/no-namespace */
 import { z } from "zod"
 
-// Turn on for debugging
-// console.log("ENVIRONMENT VARIABLES:")
-
-// for (const key of Object.keys(process.env)) {
-//   console.log(`${key}: ${process.env[key]}`)
-// }
-
 const schema = z.object({
   NODE_ENV: z.enum(["production", "development", "test"] as const),
   SESSION_SECRET: z.string().min(1, "SESSION_SECRET must not be empty"),
@@ -27,7 +20,7 @@ declare global {
   }
 }
 
-export function init() {
+export function initEnv() {
   const parsed = schema.safeParse(process.env)
 
   if (parsed.success === false) {
