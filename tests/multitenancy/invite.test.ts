@@ -4,6 +4,7 @@ import * as schema from "schema/multitenancy"
 import { describe, expect, it } from "vitest"
 import {
   acceptInvitation,
+  declineInvitation,
   inviteUserToOrganization,
   listInvitations,
 } from "~/utils/multitenancy/invite.server"
@@ -241,6 +242,101 @@ describe("Invitations", () => {
       const invitations = await listInvitations({ email: noInvitationsEmail })
 
       expect(invitations).toEqual([])
+    })
+  })
+
+  describe("declineInvitation", () => {
+    it("should successfully decline an invitation by removing the membership record", async () => {
+      // Create a user and their organization
+      const { user: user1, organization: organization1 } =
+        await createUserWithOrganization({
+          user: {
+            name: "Decline Test User 1",
+            email: "decline-test1@example.com",
+          },
+          organizationName: "Decline Test Org 1",
+        })
+
+      // Create another organization to invite the user to
+      const { organization: organization2 } = await createUserWithOrganization({
+        user: {
+          name: "Decline Test User 2",
+          email: "decline-test2@example.com",
+        },
+        organizationName: "Decline Test Org 2",
+      })
+
+      // Invite user1 to organization2
+      const invitation = await inviteUserToOrganization({
+        email: user1.email,
+        organizationId: organization2.id,
+        roleName: "MEMBER",
+      })
+
+      // Decline the invitation
+      const declinedInvitationId = await declineInvitation({
+        membershipId: invitation.id,
+      })
+
+      // Verify the invitation has been declined
+      expect(declinedInvitationId).toBe(invitation.id)
+
+      // Try to fetch the declined invitation
+      const declinedInvitation = await db.query.memberships.findFirst({
+        where: eq(schema.memberships.id, invitation.id),
+      })
+
+      // Expect the invitation to no longer exist
+      expect(declinedInvitation).toBeUndefined()
+    })
+
+    it("should throw an error if invitation is not found", async () => {
+      await expect(
+        declineInvitation({
+          membershipId: 999,
+        }),
+      ).rejects.toThrowError("Invitation not found or already accepted")
+    })
+
+    it("should throw an error if invitation is already accepted", async () => {
+      // Create a user and their organization
+      const { user: user1, organization: organization1 } =
+        await createUserWithOrganization({
+          user: {
+            name: "Decline Test User 3",
+            email: "decline-test3@example.com",
+          },
+          organizationName: "Decline Test Org 3",
+        })
+
+      // Create another organization to invite the user to
+      const { organization: organization2 } = await createUserWithOrganization({
+        user: {
+          name: "Decline Test User 4",
+          email: "decline-test4@example.com",
+        },
+        organizationName: "Decline Test Org 4",
+      })
+
+      // Invite user1 to organization2
+      const invitation = await inviteUserToOrganization({
+        email: user1.email,
+        organizationId: organization2.id,
+        roleName: "MEMBER",
+      })
+
+      // Accept the invitation
+      await acceptInvitation({
+        membershipId: invitation.id,
+        userId: user1.id,
+      })
+
+      // Try to decline the already accepted invitation
+      await expect(
+        declineInvitation({
+          membershipId: invitation.id,
+        }),
+      ).rejects.toThrowError("Invitation not found or already accepted")
     })
   })
 })

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest"
 import {
   addRoleToMembership,
   createMembership,
+  removeMembership,
   removeRoleFromMembership,
 } from "~/utils/multitenancy/membership.server"
 import { createUserWithOrganization } from "~/utils/multitenancy/user.server"
@@ -166,6 +167,84 @@ describe("Memberships and Roles", () => {
       ).toThrow(
         "NON_EXISTENT_ROLE role not found. Please ensure the database is properly seeded.",
       )
+    })
+  })
+
+  describe("removeMembership", () => {
+    it("should remove a membership and its associated roles", async () => {
+      const { membership } = await createUserWithOrganization({
+        user: {
+          name: "Alice Johnson",
+          email: "alice@example.com",
+        },
+        organizationName: "Remove Test Org",
+      })
+
+      // Add an additional role to the membership
+      await addRoleToMembership({
+        membershipId: membership.id,
+        roleName: "ADMIN",
+      })
+
+      // Remove the membership
+      await removeMembership({ membershipId: membership.id })
+
+      // Check if the membership was removed
+      const removedMembership = await db
+        .select()
+        .from(schema.memberships)
+        .where(eq(schema.memberships.id, membership.id))
+        .get()
+
+      expect(removedMembership).toBeUndefined()
+
+      // Check if associated roles were removed
+      const remainingRoles = await db
+        .select()
+        .from(schema.membershipRoles)
+        .where(eq(schema.membershipRoles.membershipId, membership.id))
+        .all()
+
+      expect(remainingRoles.length).toBe(0)
+    })
+
+    it("should throw an error when trying to remove a non-existent membership", async () => {
+      const nonExistentMembershipId = 999999 // Assuming this ID doesn't exist
+
+      expect(() =>
+        removeMembership({ membershipId: nonExistentMembershipId }),
+      ).toThrowError(`Membership with id ${nonExistentMembershipId} not found`)
+    })
+
+    it("should not affect other memberships when removing one", async () => {
+      const { membership: membership1 } = await createUserWithOrganization({
+        user: {
+          name: "Bob Wilson",
+          email: "bob@example.com",
+        },
+        organizationName: "Bob's Org",
+      })
+
+      const { membership: membership2 } = await createUserWithOrganization({
+        user: {
+          name: "Charlie Brown",
+          email: "charlie@example.com",
+        },
+        organizationName: "Charlie's Org",
+      })
+
+      // Remove membership1
+      await removeMembership({ membershipId: membership1.id })
+
+      // Check if membership2 still exists
+      const remainingMembership = await db
+        .select()
+        .from(schema.memberships)
+        .where(eq(schema.memberships.id, membership2.id))
+        .get()
+
+      expect(remainingMembership).toBeDefined()
+      expect(remainingMembership!.id).toBe(membership2.id)
     })
   })
 })

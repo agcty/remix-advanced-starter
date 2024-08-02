@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm"
 import * as schema from "schema/multitenancy"
 import { type TransactionParam } from "schema/types"
 
+// Not intended to be used directly, only exported for usage by inviteUserToOrganization
 export function createPendingMembership({
   organizationId,
   invitedEmail,
@@ -121,3 +122,37 @@ export function removeRoleFromMembership({
 }
 
 // removeMembership removes a membership from the database along with all associated roles
+
+export function removeMembership({
+  membershipId,
+  tx = db,
+}: {
+  membershipId: number
+} & TransactionParam): void {
+  // Check if the membership exists
+  const existingMembership = tx
+    .select()
+    .from(schema.memberships)
+    .where(eq(schema.memberships.id, membershipId))
+    .get()
+
+  if (!existingMembership) {
+    throw new Error(`Membership with id ${membershipId} not found`)
+  }
+
+  // Remove related membershipRoles
+  tx.delete(schema.membershipRoles)
+    .where(eq(schema.membershipRoles.membershipId, membershipId))
+    .run()
+
+  // Remove the membership
+  const result = tx
+    .delete(schema.memberships)
+    .where(eq(schema.memberships.id, membershipId))
+    .run()
+
+  // Check if any rows were affected
+  if (result.changes === 0) {
+    throw new Error(`Failed to remove membership with id ${membershipId}`)
+  }
+}

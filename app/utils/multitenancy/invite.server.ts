@@ -7,9 +7,8 @@ import {
 } from "./membership.server"
 
 /**
- * This function invites a user to an organization. It is designed in such a way that the user has to accept the invitation before they can be associated with the organization.
- * @param param0
- * @returns
+ * This function invites a user to an organization.
+ * It is designed in such a way that the user has to accept the invitation before they can be associated with the organization.
  */
 export async function inviteUserToOrganization({
   email,
@@ -145,4 +144,30 @@ export async function listInvitations({ email }: { email: string }) {
     })),
     invitedAt: invitation.createdAt,
   }))
+}
+
+export async function declineInvitation({
+  membershipId,
+}: {
+  membershipId: number
+}) {
+  // Find the pending invitation
+  const invitation = await db.query.memberships.findFirst({
+    where: and(
+      eq(schema.memberships.id, membershipId),
+      isNull(schema.memberships.userId),
+    ),
+  })
+
+  if (!invitation) {
+    throw new Error("Invitation not found or already accepted")
+  }
+
+  // Delete the membership record
+  await db
+    .delete(schema.memberships)
+    .where(eq(schema.memberships.id, membershipId))
+
+  console.log(`Invitation ${membershipId} declined and removed`)
+  return membershipId
 }

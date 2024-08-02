@@ -39,7 +39,7 @@ export const users = sqliteTable("multitenancy_users", {
   email: text("email", { length: 320 }).notNull().unique(),
   activeOrganizationId: integer("active_organization_id")
     .notNull()
-    .references(() => organizations.id),
+    .references(() => organizations.id, { onUpdate: "cascade" }),
   globalRole: text("global_role", { enum: ["SUPERADMIN", "CUSTOMER"] })
     .notNull()
     .default("CUSTOMER"),
@@ -57,8 +57,14 @@ export const memberships = sqliteTable(
     id: integer("id").primaryKey({ autoIncrement: true }),
     organizationId: integer("organization_id")
       .notNull()
-      .references(() => organizations.id),
-    userId: integer("user_id").references(() => users.id),
+      .references(() => organizations.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
+    userId: integer("user_id").references(() => users.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
     invitedName: text("invited_name", { length: 255 }),
     invitedEmail: text("invited_email", { length: 320 }),
     createdAt: integer("created_at", { mode: "timestamp" })
@@ -69,9 +75,7 @@ export const memberships = sqliteTable(
       .default(sql`CURRENT_TIMESTAMP`),
   },
   table => ({
-    // A user can only be invited once to an organization
     uniqueOrgEmail: unique().on(table.organizationId, table.invitedEmail),
-    // A user can only have one membership in an organization
     uniqueUserOrg: unique().on(table.userId, table.organizationId),
   }),
 )
@@ -103,10 +107,13 @@ export const rolePermissions = sqliteTable(
   {
     roleId: integer("role_id")
       .notNull()
-      .references(() => roles.id),
+      .references(() => roles.id, { onDelete: "cascade", onUpdate: "cascade" }),
     permissionId: integer("permission_id")
       .notNull()
-      .references(() => permissions.id),
+      .references(() => permissions.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
   },
   table => ({
     pk: primaryKey({ columns: [table.roleId, table.permissionId] }),
@@ -118,10 +125,13 @@ export const membershipRoles = sqliteTable(
   {
     membershipId: integer("membership_id")
       .notNull()
-      .references(() => memberships.id),
+      .references(() => memberships.id, {
+        onDelete: "cascade",
+        onUpdate: "cascade",
+      }),
     roleId: integer("role_id")
       .notNull()
-      .references(() => roles.id),
+      .references(() => roles.id, { onDelete: "cascade", onUpdate: "cascade" }),
   },
   table => ({
     pk: primaryKey({ columns: [table.membershipId, table.roleId] }),
@@ -210,3 +220,46 @@ export type InsertPermission = InferInsertModel<typeof permissions>
 
 // AI Questions you can ask to understand this file better:
 // Does this drizzle schema adhere to the best practices and the schema description?
+
+// Explanations for the added cascade statements:
+
+// organizations table:
+
+// No cascade statements added, as it's the root table.
+
+// users table:
+
+// Added onUpdate: "cascade" to activeOrganizationId. This ensures that if an organization's ID changes, the user's active organization reference is updated.
+
+// memberships table:
+
+// Added onDelete: "cascade", onUpdate: "cascade" to both organizationId and userId. This means:
+
+// If an organization is deleted, all its memberships are automatically deleted.
+// If a user is deleted, all their memberships are automatically deleted.
+// If an organization's or user's ID is updated, the membership references are updated accordingly.
+
+// rolePermissions table:
+
+// Added onDelete: "cascade", onUpdate: "cascade" to both roleId and permissionId. This means:
+
+// If a role is deleted, all its permission associations are automatically deleted.
+// If a permission is deleted, all its role associations are automatically deleted.
+// If a role's or permission's ID is updated, the associations are updated accordingly.
+
+// membershipRoles table:
+
+// Added onDelete: "cascade", onUpdate: "cascade" to both membershipId and roleId. This means:
+
+// If a membership is deleted, all its role associations are automatically deleted.
+// If a role is deleted, all its membership associations are automatically deleted.
+// If a membership's or role's ID is updated, the associations are updated accordingly.
+
+// These cascade statements are important for maintaining data integrity and consistency in your database. They ensure that:
+
+// Related data is properly cleaned up when parent records are deleted, preventing orphaned records.
+// References are kept up-to-date if primary keys are updated.
+// The database maintains consistency without requiring additional application logic to manage these relationships.
+
+// However, it's important to note that cascading deletes should be used carefully, as they can lead to unintended data loss if not properly managed. In this case, the cascade deletes are appropriate given the nature of the relationships between the entities in your multi-tenancy system.
+// For the users table, we only added a cascade update for activeOrganizationId. We didn't add a cascade delete because deleting an organization shouldn't automatically delete its users. Users might belong to multiple organizations, and deleting all users when an organization is deleted could result in unexpected data loss.
