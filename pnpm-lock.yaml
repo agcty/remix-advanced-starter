@@ -81,11 +81,11 @@ importers:
         specifier: ^16.4.5
         version: 16.4.5
       drizzle-orm:
-        specifier: ^0.31.4
-        version: 0.31.4(@opentelemetry/api@1.9.0)(@prisma/client@5.17.0)(@types/better-sqlite3@7.6.11)(@types/pg@8.6.1)(@types/react@18.3.3)(better-sqlite3@11.1.2)(react@18.3.1)
+        specifier: ^0.32.1
+        version: 0.32.1(@opentelemetry/api@1.9.0)(@prisma/client@5.17.0)(@types/better-sqlite3@7.6.11)(@types/pg@8.6.1)(@types/react@18.3.3)(better-sqlite3@11.1.2)(react@18.3.1)
       drizzle-zod:
         specifier: ^0.5.1
-        version: 0.5.1(drizzle-orm@0.31.4(@opentelemetry/api@1.9.0)(@prisma/client@5.17.0)(@types/better-sqlite3@7.6.11)(@types/pg@8.6.1)(@types/react@18.3.3)(better-sqlite3@11.1.2)(react@18.3.1))(zod@3.23.8)
+        version: 0.5.1(drizzle-orm@0.32.1(@opentelemetry/api@1.9.0)(@prisma/client@5.17.0)(@types/better-sqlite3@7.6.11)(@types/pg@8.6.1)(@types/react@18.3.3)(better-sqlite3@11.1.2)(react@18.3.1))(zod@3.23.8)
       ethers:
         specifier: ^6.13.2
         version: 6.13.2(bufferutil@4.0.8)(utf-8-validate@5.0.10)
@@ -211,8 +211,8 @@ importers:
         specifier: ^10.4.19
         version: 10.4.19(postcss@8.4.40)
       drizzle-kit:
-        specifier: ^0.22.8
-        version: 0.22.8
+        specifier: ^0.23.1
+        version: 0.23.1
       esbuild:
         specifier: ^0.23.0
         version: 0.23.0
@@ -1052,6 +1052,9 @@ packages:
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
+
+  '@drizzle-team/brocli@0.8.2':
+    resolution: {integrity: sha512-zTrFENsqGvOkBOuHDC1pXCkDXNd2UhP4lI3gYGhQ1R1SPeAAfqzPsV1dcpMy4uNU6kB5VpU5NGhvwxVNETR02A==}
 
   '@emotion/babel-plugin@11.12.0':
     resolution: {integrity: sha512-y2WQb+oP8Jqvvclh8Q55gLUyb7UFvgv7eJfsj7td5TToBrIUtPay2kMrZi4xjq9qw2vD0ZR5fSho0yqoFgX7Rw==}
@@ -5089,12 +5092,12 @@ packages:
     resolution: {integrity: sha512-ZmdL2rui+eB2YwhsWzjInR8LldtZHGDoQ1ugH85ppHKwpUHL7j7rN0Ti9NCnGiQbhaZ11FpR+7ao1dNsmduNUg==}
     engines: {node: '>=12'}
 
-  drizzle-kit@0.22.8:
-    resolution: {integrity: sha512-VjI4wsJjk3hSqHSa3TwBf+uvH6M6pRHyxyoVbt935GUzP9tUR/BRZ+MhEJNgryqbzN2Za1KP0eJMTgKEPsalYQ==}
+  drizzle-kit@0.23.1:
+    resolution: {integrity: sha512-posGQhj8/K4S4CPhk7BO9+IcpNdIh96t0DvcAr/NvMKhPhe5D0MELzmpq9R2MpmSP3fd+Z3upwidtetrw7xnjg==}
     hasBin: true
 
-  drizzle-orm@0.31.4:
-    resolution: {integrity: sha512-VGD9SH9aStF2z4QOTnVlVX/WghV/EnuEzTmsH3fSVp2E4fFgc8jl3viQrS/XUJx1ekW4rVVLJMH42SfGQdjX3Q==}
+  drizzle-orm@0.32.1:
+    resolution: {integrity: sha512-Wq1J+lL8PzwR5K3a1FfoWsbs8powjr3pGA4+5+2ueN1VTLDNFYEolUyUWFtqy8DVRvYbL2n7sXZkgVmK9dQkng==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
       '@cloudflare/workers-types': '>=3'
@@ -10245,6 +10248,8 @@ snapshots:
       '@jridgewell/trace-mapping': 0.3.9
     optional: true
 
+  '@drizzle-team/brocli@0.8.2': {}
+
   '@emotion/babel-plugin@11.12.0':
     dependencies:
       '@babel/helper-module-imports': 7.24.7
@@ -15304,15 +15309,16 @@ snapshots:
 
   dotenv@16.4.5: {}
 
-  drizzle-kit@0.22.8:
+  drizzle-kit@0.23.1:
     dependencies:
+      '@drizzle-team/brocli': 0.8.2
       '@esbuild-kit/esm-loader': 2.6.5
       esbuild: 0.19.12
       esbuild-register: 3.6.0(esbuild@0.19.12)
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.31.4(@opentelemetry/api@1.9.0)(@prisma/client@5.17.0)(@types/better-sqlite3@7.6.11)(@types/pg@8.6.1)(@types/react@18.3.3)(better-sqlite3@11.1.2)(react@18.3.1):
+  drizzle-orm@0.32.1(@opentelemetry/api@1.9.0)(@prisma/client@5.17.0)(@types/better-sqlite3@7.6.11)(@types/pg@8.6.1)(@types/react@18.3.3)(better-sqlite3@11.1.2)(react@18.3.1):
     optionalDependencies:
       '@opentelemetry/api': 1.9.0
       '@prisma/client': 5.17.0
@@ -15322,9 +15328,9 @@ snapshots:
       better-sqlite3: 11.1.2
       react: 18.3.1
 
-  drizzle-zod@0.5.1(drizzle-orm@0.31.4(@opentelemetry/api@1.9.0)(@prisma/client@5.17.0)(@types/better-sqlite3@7.6.11)(@types/pg@8.6.1)(@types/react@18.3.3)(better-sqlite3@11.1.2)(react@18.3.1))(zod@3.23.8):
+  drizzle-zod@0.5.1(drizzle-orm@0.32.1(@opentelemetry/api@1.9.0)(@prisma/client@5.17.0)(@types/better-sqlite3@7.6.11)(@types/pg@8.6.1)(@types/react@18.3.3)(better-sqlite3@11.1.2)(react@18.3.1))(zod@3.23.8):
     dependencies:
-      drizzle-orm: 0.31.4(@opentelemetry/api@1.9.0)(@prisma/client@5.17.0)(@types/better-sqlite3@7.6.11)(@types/pg@8.6.1)(@types/react@18.3.3)(better-sqlite3@11.1.2)(react@18.3.1)
+      drizzle-orm: 0.32.1(@opentelemetry/api@1.9.0)(@prisma/client@5.17.0)(@types/better-sqlite3@7.6.11)(@types/pg@8.6.1)(@types/react@18.3.3)(better-sqlite3@11.1.2)(react@18.3.1)
       zod: 3.23.8
 
   duplexify@3.7.1:

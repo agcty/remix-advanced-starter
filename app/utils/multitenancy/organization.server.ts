@@ -1,14 +1,20 @@
 import { db } from "db.server"
 import { and, eq } from "drizzle-orm"
 import * as schema from "schema/multitenancy"
-import { type TransactionParam } from "schema/types"
+import {
+  type TransactionParam,
+  withTransaction,
+  type WithTransactionParams,
+} from "schema/types"
 
-export function createOrganization({
-  name,
-  tx = db,
-}: { name: string } & TransactionParam): schema.Organization {
-  return tx.insert(schema.organizations).values({ name }).returning().get()
-}
+export const createOrganization = withTransaction(
+  async ({
+    name,
+    tx,
+  }: WithTransactionParams<{ name: string }>): Promise<schema.Organization> => {
+    return tx.insert(schema.organizations).values({ name }).returning().get()
+  },
+)
 
 // change active organization, this is a helper function to change the active organization of a user, it throws when the user is not a member of the organization
 

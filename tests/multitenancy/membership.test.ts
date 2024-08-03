@@ -125,7 +125,7 @@ describe("Memberships and Roles", () => {
         roleName: "ADMIN",
       })
 
-      removeRoleFromMembership({
+      await removeRoleFromMembership({
         membershipId: membership.id,
         roleName: "ADMIN",
       })
