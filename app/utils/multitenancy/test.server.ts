@@ -1,13 +1,12 @@
-import { db } from "db.server"
-import { type DbFunctionParams, wrapDbFunction } from "schema"
+import { withTransaction, type WithTransactionParams } from "schema"
 
 // Example usage:
 
-export const removeMembership = wrapDbFunction(
+export const removeMembership = withTransaction(
   async ({
     membershipId,
     tx,
-  }: DbFunctionParams<{ membershipId: number }>): Promise<void> => {
+  }: WithTransactionParams<{ membershipId: number }>): Promise<void> => {
     // Implementation here...
     console.log(`Removing membership ${membershipId} using transaction`, tx)
   },
