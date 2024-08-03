@@ -1,34 +1,59 @@
 import { json } from "@remix-run/node"
 import { db } from "db.server"
-import { organizations, users } from "schema/multitenancy"
-import { createUserWithOrganization } from "~/utils/create-user.server"
-import { makeTimings, time } from "~/utils/timing.server"
-import { redirectWithToast } from "~/utils/toaster.server"
+import { eq, sql } from "drizzle-orm"
+import { memberships, organizations, users } from "schema"
+import { createUserWithOrganization } from "~/utils/multitenancy/user.server"
 
 export async function loader() {
-  // insert into organizations (name) values ('test')
-  // createUserWithOrganization({
-  //   user: {
-  //     email: "alex@gogl.io",
-  //     role: "SUPERADMIN",
-  //     name: "Alex",
-  //   },
-  //   organizationName: "test",
-  // })
+  const orgName = "Test Org Invite"
+  const userName = "Test User"
+  const userEmail = "test@example.com"
 
-  // // await db.insert(users).values({ email: "test@asdf.com", role: "CUSTOMER" })
-  // const timings = makeTimings("test loader")
+  try {
+    db.transaction(tx => {
+      // Create a new organization
+      const [newOrg] = tx
+        .insert(organizations)
+        .values({ name: orgName })
+        .returning()
 
-  // const data = await time(() => db.select().from(users), {
-  //   timings,
-  //   type: "getUserId",
-  //   desc: "getUserId in root",
-  // })
+      // Create a new user
+      const [newUser] = tx
+        .insert(users)
+        .values({
+          name: userName,
+          email: userEmail,
+          activeOrganizationId: newOrg.id,
+        })
+        .returning()
 
-  const data = "test"
+      // Create a membership
+      tx.insert(memberships).values({
+        organizationId: newOrg.id,
+        userId: newUser.id,
+      })
+
+      // Intentionally cause an error
+      throw new Error("Simulated error")
+    })
+  } catch (error) {
+    // Transaction should have been rolled back
+    console.error("Error occurred:", error)
+  }
+
+  // Verify that no data was persisted
+  const orgCount = await db
+    .select()
+    .from(organizations)
+    .where(eq(organizations.name, orgName))
+
+  const userCount = await db
+    .select({ count: sql`count(*)` })
+    .from(users)
+    .where(eq(users.email, userEmail))
 
   return json(
-    { data },
+    { orgCount, userCount },
     // { headers: { "Server-Timing": timings.toString() } }, // <-- 3. Create headers
   )
 
