@@ -1,6 +1,6 @@
 import { db } from "db.server"
 import { and, eq, isNull } from "drizzle-orm"
-import * as schema from "schema/multitenancy"
+import * as schema from "schema"
 import {
   addRoleToMembership,
   createPendingMembership,

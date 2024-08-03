@@ -1,8 +1,12 @@
 import { db } from "db.server"
 import { eq } from "drizzle-orm"
 import * as schema from "schema/multitenancy"
-import { describe, expect, it } from "vitest"
-import { createOrganization } from "~/utils/multitenancy/organization.server"
+import { beforeEach, describe, expect, it } from "vitest"
+import { createMembership } from "~/utils/multitenancy/membership.server"
+import {
+  changeActiveOrganization,
+  createOrganization,
+} from "~/utils/multitenancy/organization.server"
 import {
   createUserWithOrganization,
   type CreateUserWithOrganizationParams,
@@ -159,6 +163,69 @@ describe("User", () => {
           organizationName: "Test Org 2",
         }),
       ).toThrowError("UNIQUE constraint failed: multitenancy_users.email")
+    })
+  })
+
+  describe("changeActiveOrganization", () => {
+    let user1: schema.User
+    let org1: schema.Organization
+    let org2: schema.Organization
+
+    beforeEach(async () => {
+      // Create a user with an organization
+      const result = await createUserWithOrganization({
+        user: { name: "Test User", email: "testuser@example.com" },
+        organizationName: "Test Org 1",
+      })
+      user1 = result.user
+      org1 = result.organization
+
+      // Create another organization
+      org2 = await createOrganization({ name: "Test Org 2" })
+    })
+
+    it("successfully changes active organization for a member", async () => {
+      // Add user to org2
+      await createMembership({
+        userId: user1.id,
+        organizationId: org2.id,
+      })
+
+      const updatedUser = await changeActiveOrganization({
+        userId: user1.id,
+        organizationId: org2.id,
+      })
+
+      expect(updatedUser.activeOrganizationId).toBe(org2.id)
+    })
+
+    it("throws an error when user is not a member of the organization", async () => {
+      await expect(
+        changeActiveOrganization({
+          userId: user1.id,
+          organizationId: org2.id,
+        }),
+      ).rejects.toThrow("User is not a member of the specified organization")
+    })
+
+    it("throws an error for invalid user ID", async () => {
+      const invalidUserId = 9999
+      await expect(
+        changeActiveOrganization({
+          userId: invalidUserId,
+          organizationId: org1.id,
+        }),
+      ).rejects.toThrow("User is not a member of the specified organization")
+    })
+
+    it("throws an error for invalid organization ID", async () => {
+      const invalidOrgId = 9999
+      await expect(
+        changeActiveOrganization({
+          userId: user1.id,
+          organizationId: invalidOrgId,
+        }),
+      ).rejects.toThrow("User is not a member of the specified organization")
     })
   })
 })
