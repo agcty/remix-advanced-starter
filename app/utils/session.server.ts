@@ -1,7 +1,6 @@
 import { createCookieSessionStorage } from "@remix-run/node"
 
-// export the whole sessionStorage object
-export const sessionStorage = createCookieSessionStorage({
+export const authSessionStorage = createCookieSessionStorage({
   cookie: {
     name: "_session", // use any name you want here
     sameSite: "lax", // this helps with CSRF
@@ -12,5 +11,28 @@ export const sessionStorage = createCookieSessionStorage({
   },
 })
 
-// you can also export the methods individually for your own usage
-export const { getSession, commitSession, destroySession } = sessionStorage
+// we have to do this because every time you commit the session you overwrite it
+// so we store the expiration time in the cookie and reset it every time we commit
+const originalCommitSession = authSessionStorage.commitSession
+
+Object.defineProperty(authSessionStorage, "commitSession", {
+  value: async function commitSession(
+    ...args: Parameters<typeof originalCommitSession>
+  ) {
+    const [session, options] = args
+    if (options?.expires) {
+      session.set("expires", options.expires)
+    }
+    if (options?.maxAge) {
+      session.set("expires", new Date(Date.now() + options.maxAge * 1000))
+    }
+    const expires = session.has("expires")
+      ? new Date(session.get("expires"))
+      : undefined
+    const setCookieHeader = await originalCommitSession(session, {
+      ...options,
+      expires,
+    })
+    return setCookieHeader
+  },
+})

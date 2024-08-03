@@ -1,6 +1,6 @@
 import { Authenticator } from "remix-auth"
 import { GoogleStrategy, SocialsProvider } from "remix-auth-socials"
-import { sessionStorage } from "./session.server"
+import { authSessionStorage } from "./session.server"
 
 type User = {
   email: string
@@ -9,7 +9,7 @@ type User = {
 
 // Create an instance of the authenticator, pass a generic with what
 // strategies will return and will store in the session
-export const authenticator = new Authenticator<User>(sessionStorage, {
+export const authenticator = new Authenticator<User>(authSessionStorage, {
   sessionKey: "sessionKey", // keep in sync
   sessionErrorKey: "sessionErrorKey", // keep in sync
 })
