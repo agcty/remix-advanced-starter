@@ -173,7 +173,7 @@ describe("User", () => {
 
     beforeEach(async () => {
       // Create a user with an organization
-      const result = await createUserWithOrganization({
+      const result = createUserWithOrganization({
         user: { name: "Test User", email: "testuser@example.com" },
         organizationName: "Test Org 1",
       })
@@ -181,17 +181,17 @@ describe("User", () => {
       org1 = result.organization
 
       // Create another organization
-      org2 = await createOrganization({ name: "Test Org 2" })
+      org2 = createOrganization({ name: "Test Org 2" })
     })
 
     it("successfully changes active organization for a member", async () => {
       // Add user to org2
-      await createMembership({
+      createMembership({
         userId: user1.id,
         organizationId: org2.id,
       })
 
-      const updatedUser = await changeActiveOrganization({
+      const updatedUser = changeActiveOrganization({
         userId: user1.id,
         organizationId: org2.id,
       })
@@ -200,32 +200,32 @@ describe("User", () => {
     })
 
     it("throws an error when user is not a member of the organization", async () => {
-      await expect(
+      expect(() =>
         changeActiveOrganization({
           userId: user1.id,
           organizationId: org2.id,
         }),
-      ).rejects.toThrow("User is not a member of the specified organization")
+      ).toThrow("User is not a member of the specified organization")
     })
 
     it("throws an error for invalid user ID", async () => {
       const invalidUserId = 9999
-      await expect(
+      expect(() =>
         changeActiveOrganization({
           userId: invalidUserId,
           organizationId: org1.id,
         }),
-      ).rejects.toThrow("User is not a member of the specified organization")
+      ).toThrow("User is not a member of the specified organization")
     })
 
     it("throws an error for invalid organization ID", async () => {
       const invalidOrgId = 9999
-      await expect(
+      expect(() =>
         changeActiveOrganization({
           userId: user1.id,
           organizationId: invalidOrgId,
         }),
-      ).rejects.toThrow("User is not a member of the specified organization")
+      ).toThrow("User is not a member of the specified organization")
     })
   })
 })

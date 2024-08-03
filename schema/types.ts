@@ -8,6 +8,8 @@ export type WithTransactionParams<P extends Record<string, unknown>> = P & {
   tx: Database
 }
 
+export type TransactionParam = { tx?: Database }
+
 export type DbFunction<P extends Record<string, unknown>, R> = (
   params: WithTransactionParams<P>,
 ) => Promise<R>

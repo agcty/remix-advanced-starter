@@ -1,5 +1,6 @@
 import { db } from "db.server"
 import { and, eq } from "drizzle-orm"
+import * as schema from "schema/multitenancy"
 import { describe, expect, it } from "vitest"
 import {
   addRoleToMembership,
@@ -8,7 +9,6 @@ import {
   removeRoleFromMembership,
 } from "~/utils/multitenancy/membership.server"
 import { createUserWithOrganization } from "~/utils/multitenancy/user.server"
-import * as schema from "../../schema/multitenancy"
 
 describe("Memberships and Roles", () => {
   describe("createMembership", () => {

@@ -1,6 +1,6 @@
 import { db } from "db.server"
 import * as schema from "schema/multitenancy"
-import { type TransactionParam } from "schema/types"
+import { type WithTransactionParams } from "schema/types"
 import { z } from "zod"
 import { addRoleToMembership, createMembership } from "./membership.server"
 import { createOrganization } from "./organization.server"
@@ -36,7 +36,7 @@ function createUser({
     "id" | "activeOrganizationId" | "createdAt" | "updatedAt" | "globalRole"
   >
   activeOrganizationId: number
-} & TransactionParam): schema.User {
+} & WithTransactionParams): schema.User {
   return tx
     .insert(schema.users)
     .values({

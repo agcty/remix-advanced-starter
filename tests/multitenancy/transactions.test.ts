@@ -1,6 +1,6 @@
 import { db } from "db.server"
 import * as schema from "schema/multitenancy"
-import { afterEach, beforeEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it } from "vitest"
 import { createUserWithOrganization } from "~/utils/multitenancy/user.server"
 
 const logDbState = async (message: string) => {

@@ -12,18 +12,18 @@ export function createOrganization({
 
 // change active organization, this is a helper function to change the active organization of a user, it throws when the user is not a member of the organization
 
-export async function changeActiveOrganization({
+export function changeActiveOrganization({
   userId,
   organizationId,
   tx = db,
 }: {
   userId: number
   organizationId: number
-} & TransactionParam): Promise<schema.User> {
+} & TransactionParam): schema.User {
   // It can happen that a transaction is already passed in the tx parameter so the below transaction will be a nested transaction
-  return await tx.transaction(async tx2 => {
+  return tx.transaction(tx2 => {
     // Check if the user is a member of the organization
-    const membership = await tx2
+    const membership = tx2
       .select()
       .from(schema.memberships)
       .where(
@@ -39,7 +39,7 @@ export async function changeActiveOrganization({
     }
 
     // Update the user's activeOrganizationId
-    const updatedUser = await tx2
+    const updatedUser = tx2
       .update(schema.users)
       .set({ activeOrganizationId: organizationId })
       .where(eq(schema.users.id, userId))
