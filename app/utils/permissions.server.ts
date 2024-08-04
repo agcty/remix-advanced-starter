@@ -8,7 +8,7 @@ import {
   rolePermissions,
   roles,
   users,
-} from "../../schema/multitenancy"
+} from "../../schema/postgres/multitenancy"
 import { requireUserId } from "./auth.server.ts"
 import { parsePermissionString, type PermissionString } from "./user"
 

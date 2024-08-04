@@ -10,7 +10,7 @@ import {
   rolePermissions,
   roles,
   users,
-} from "../../schema/multitenancy"
+} from "../../schema/postgres/multitenancy"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function isUser(user: any): user is SerializeFrom<typeof rootLoader>["user"] {

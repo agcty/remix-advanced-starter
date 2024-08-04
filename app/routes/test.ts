@@ -1,7 +1,7 @@
 import { json } from "@remix-run/node"
 import { db } from "db.server"
 import { eq, sql } from "drizzle-orm"
-import { memberships, organizations, users } from "schema"
+import { memberships, organizations, users } from "schema/postgres"
 import { createUserWithOrganization } from "~/utils/multitenancy/user.server"
 
 export async function loader() {

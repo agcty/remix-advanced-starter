@@ -2,7 +2,7 @@
 import { db } from "db.server"
 import { and, eq, sql } from "drizzle-orm"
 import { type SQLiteTableWithColumns } from "drizzle-orm/sqlite-core"
-import * as schema from "schema"
+import * as schema from "schema/postgres"
 
 export async function seed(): Promise<void> {
   try {

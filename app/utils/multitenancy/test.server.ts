@@ -1,4 +1,4 @@
-import { withTransaction, type WithTransactionParams } from "schema"
+import { withTransaction, type WithTransactionParams } from "schema/postgres"
 
 // Example usage:
 

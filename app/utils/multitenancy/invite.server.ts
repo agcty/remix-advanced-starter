@@ -1,6 +1,6 @@
 import { db } from "db.server"
 import { and, eq, isNull } from "drizzle-orm"
-import * as schema from "schema"
+import * as schema from "schema/postgres"
 import {
   addRoleToMembership,
   createPendingMembership,
