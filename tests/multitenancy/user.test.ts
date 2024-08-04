@@ -1,6 +1,6 @@
 import { db } from "db.server"
 import { eq } from "drizzle-orm"
-import * as schema from "schema/multitenancy"
+import * as schema from "schema/postgres"
 import { beforeEach, describe, expect, it } from "vitest"
 import { createMembership } from "~/utils/multitenancy/membership.server"
 import {

@@ -1,5 +1,5 @@
 import { db } from "db.server"
-import * as schema from "schema/multitenancy"
+import * as schema from "schema/postgres"
 import { type TransactionParam } from "schema/types"
 import { z } from "zod"
 import { addRoleToMembership, createMembership } from "./membership.server"

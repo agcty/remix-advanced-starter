@@ -1,6 +1,6 @@
 import { db } from "db.server"
 import { and, eq } from "drizzle-orm"
-import * as schema from "schema/multitenancy"
+import * as schema from "schema/postgres"
 import { describe, expect, it } from "vitest"
 import {
   addRoleToMembership,
