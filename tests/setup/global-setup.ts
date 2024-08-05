@@ -27,7 +27,7 @@ export async function setup() {
 
 export async function teardown() {
   try {
-    console.log("Cleaning up test environment...")
+    console.log("Cleaning up local test files and databases...")
 
     const dbPath = path.join(process.cwd(), process.env.DATABASE_URL)
 

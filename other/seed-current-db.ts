@@ -1,5 +1,7 @@
 import "dotenv/config"
-import { seed, teardown } from "./seed"
+import { connection } from "db.server"
+import { seed } from "./seed"
 
 await seed()
-await teardown()
+
+connection.end()
