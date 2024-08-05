@@ -46,18 +46,18 @@ describe("User", () => {
       // use helper function userHasRole instead
 
       // Check if OWNER role was assigned
-      const ownerRole = await db
+      const [ownerRole] = await db
         .select()
         .from(schema.roles)
         .where(eq(schema.roles.name, "OWNER"))
-        .get()
+
       expect(ownerRole).toBeDefined()
 
-      const membershipRole = await db
+      const [membershipRole] = await db
         .select()
         .from(schema.membershipRoles)
         .where(eq(schema.membershipRoles.membershipId, result.membership.id))
-        .get()
+
       expect(membershipRole).toBeDefined()
       expect(membershipRole?.roleId).toBe(ownerRole?.id)
     })
@@ -68,12 +68,12 @@ describe("User", () => {
         email: "invalid-email", // Invalid email format
       }
 
-      expect(() =>
+      await expect(() =>
         createUserWithOrganization({
           user: invalidUserData,
           organizationName: "Test Org",
         }),
-      ).toThrow()
+      ).rejects.toThrow()
     })
 
     it("rolls back transaction on error due to unique constraint violation", async () => {
@@ -93,7 +93,9 @@ describe("User", () => {
           user: userData, // Same email as before
           organizationName: "Test Org 2",
         }),
-      ).toThrow("UNIQUE constraint failed: multitenancy_users.email")
+      ).rejects.toThrow(
+        'duplicate key value violates unique constraint "mt_users_email_unique"',
+      )
 
       // Verify that the second organization was not created
       const orgs = await db.select().from(schema.organizations)
@@ -162,7 +164,9 @@ describe("User", () => {
           user: user,
           organizationName: "Test Org 2",
         }),
-      ).toThrowError("UNIQUE constraint failed: multitenancy_users.email")
+      ).rejects.toThrowError(
+        'duplicate key value violates unique constraint "mt_users_email_unique"',
+      )
     })
   })
 
@@ -173,7 +177,7 @@ describe("User", () => {
 
     beforeEach(async () => {
       // Create a user with an organization
-      const result = createUserWithOrganization({
+      const result = await createUserWithOrganization({
         user: { name: "Test User", email: "testuser@example.com" },
         organizationName: "Test Org 1",
       })
@@ -181,17 +185,17 @@ describe("User", () => {
       org1 = result.organization
 
       // Create another organization
-      org2 = createOrganization({ name: "Test Org 2" })
+      org2 = await createOrganization({ name: "Test Org 2" })
     })
 
     it("successfully changes active organization for a member", async () => {
       // Add user to org2
-      createMembership({
+      await createMembership({
         userId: user1.id,
         organizationId: org2.id,
       })
 
-      const updatedUser = changeActiveOrganization({
+      const updatedUser = await changeActiveOrganization({
         userId: user1.id,
         organizationId: org2.id,
       })
@@ -200,32 +204,32 @@ describe("User", () => {
     })
 
     it("throws an error when user is not a member of the organization", async () => {
-      expect(() =>
+      await expect(() =>
         changeActiveOrganization({
           userId: user1.id,
           organizationId: org2.id,
         }),
-      ).toThrow("User is not a member of the specified organization")
+      ).rejects.toThrow("User is not a member of the specified organization")
     })
 
     it("throws an error for invalid user ID", async () => {
       const invalidUserId = 9999
-      expect(() =>
+      await expect(() =>
         changeActiveOrganization({
           userId: invalidUserId,
           organizationId: org1.id,
         }),
-      ).toThrow("User is not a member of the specified organization")
+      ).rejects.toThrow("User is not a member of the specified organization")
     })
 
     it("throws an error for invalid organization ID", async () => {
       const invalidOrgId = 9999
-      expect(() =>
+      await expect(() =>
         changeActiveOrganization({
           userId: user1.id,
           organizationId: invalidOrgId,
         }),
-      ).toThrow("User is not a member of the specified organization")
+      ).rejects.toThrow("User is not a member of the specified organization")
     })
   })
 })

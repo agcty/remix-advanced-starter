@@ -26,7 +26,7 @@ type CreateUserWithOrganizationResult = {
   membership: schema.Membership
 }
 
-function createUser({
+async function createUser({
   userData,
   activeOrganizationId,
   tx = db,
@@ -36,8 +36,8 @@ function createUser({
     "id" | "activeOrganizationId" | "createdAt" | "updatedAt" | "globalRole"
   >
   activeOrganizationId: number
-} & TransactionParam): schema.User {
-  return tx
+} & TransactionParam): Promise<schema.User> {
+  const [user] = await tx
     .insert(schema.users)
     .values({
       ...userData,
@@ -45,7 +45,8 @@ function createUser({
       globalRole: "CUSTOMER",
     })
     .returning()
-    .get()
+
+  return user
 }
 
 /**
@@ -53,26 +54,29 @@ function createUser({
  * @param params
  * @returns
  */
-export function createUserWithOrganization(
+export async function createUserWithOrganization(
   params: CreateUserWithOrganizationParams,
-): CreateUserWithOrganizationResult {
+): Promise<CreateUserWithOrganizationResult> {
   const validatedData = createUserWithOrganizationSchema.parse(params)
   const { user: userData, organizationName } = validatedData
 
-  return db.transaction(tx => {
+  return db.transaction(async tx => {
     try {
-      const organization = createOrganization({ name: organizationName, tx })
-      const user = createUser({
+      const organization = await createOrganization({
+        name: organizationName,
+        tx,
+      })
+      const user = await createUser({
         userData,
         activeOrganizationId: organization.id,
         tx,
       })
-      const membership = createMembership({
+      const membership = await createMembership({
         userId: user.id,
         organizationId: organization.id,
         tx,
       })
-      addRoleToMembership({
+      await addRoleToMembership({
         membershipId: membership.id,
         roleName: "OWNER",
         tx,

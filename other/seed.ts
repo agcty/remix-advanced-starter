@@ -248,7 +248,7 @@ export async function teardown() {
       await tx.delete(schema.roles).execute()
       await tx.delete(schema.permissions).execute()
 
-      tx.run(sql`DELETE FROM sqlite_sequence`)
+      // tx.execute(sql`DELETE FROM sqlite_sequence`)
 
       console.log("Database cleanup completed successfully")
     } catch (error) {

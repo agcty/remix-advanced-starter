@@ -41,12 +41,14 @@ describe("Transaction Behavior", () => {
 
     console.log("Starting second creation (should fail)")
 
-    expect(() =>
+    await expect(() =>
       createUserWithOrganization({
         user: { name: "Test User 2", email: "test@example.com" },
         organizationName: "Test Org 2",
       }),
-    ).toThrowError("UNIQUE constraint failed: multitenancy_users.email")
+    ).rejects.toThrowError(
+      'duplicate key value violates unique constraint "mt_users_email_unique"',
+    )
 
     await logDbState("After transaction")
 

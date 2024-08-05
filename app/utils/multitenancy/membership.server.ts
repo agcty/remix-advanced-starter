@@ -4,7 +4,7 @@ import * as schema from "schema/postgres"
 import { type TransactionParam } from "schema/types"
 
 // Not intended to be used directly, only exported for usage by inviteUserToOrganization
-export function createPendingMembership({
+export async function createPendingMembership({
   organizationId,
   invitedEmail,
   invitedName,
@@ -13,7 +13,7 @@ export function createPendingMembership({
   organizationId: number
   invitedEmail: string
   invitedName?: string
-} & TransactionParam): schema.Membership {
+} & TransactionParam): Promise<schema.Membership> {
   // Validate input data
   const validatedData = schema.insertMembershipSchema.parse({
     organizationId,
@@ -22,7 +22,7 @@ export function createPendingMembership({
   })
 
   // Check if a membership (pending or active) already exists for this email in this organization
-  const existingMembership = tx
+  const [existingMembership] = await tx
     .select()
     .from(schema.memberships)
     .where(
@@ -31,7 +31,6 @@ export function createPendingMembership({
         eq(schema.memberships.invitedEmail, invitedEmail),
       ),
     )
-    .get()
 
   if (existingMembership) {
     throw new Error(
@@ -40,7 +39,7 @@ export function createPendingMembership({
   }
 
   // Create the pending membership
-  return tx
+  const [newMembership] = await tx
     .insert(schema.memberships)
     .values({
       organizationId: validatedData.organizationId,
@@ -48,37 +47,40 @@ export function createPendingMembership({
       invitedName: validatedData.invitedName,
     })
     .returning()
-    .get()
+
+  return newMembership
 }
 
-export function createMembership({
+export async function createMembership({
   userId,
   organizationId,
   tx = db,
 }: {
   userId: number
   organizationId: number
-} & TransactionParam): schema.Membership {
-  return tx
+} & TransactionParam): Promise<schema.Membership> {
+  const [membership] = await tx
     .insert(schema.memberships)
     .values({
       organizationId,
       userId,
     })
     .returning()
-    .get()
+  return membership
 }
 
-export function addRoleToMembership({
+export async function addRoleToMembership({
   membershipId,
   roleName,
   tx = db,
-}: { membershipId: number; roleName: string } & TransactionParam): void {
-  const role = tx
+}: {
+  membershipId: number
+  roleName: string
+} & TransactionParam): Promise<void> {
+  const [role] = await tx
     .select()
     .from(schema.roles)
     .where(eq(schema.roles.name, roleName))
-    .get()
 
   if (!role) {
     throw new Error(
@@ -86,24 +88,24 @@ export function addRoleToMembership({
     )
   }
 
-  tx.insert(schema.membershipRoles)
-    .values({
-      membershipId,
-      roleId: role.id,
-    })
-    .run()
+  await tx.insert(schema.membershipRoles).values({
+    membershipId,
+    roleId: role.id,
+  })
 }
 
-export function removeRoleFromMembership({
+export async function removeRoleFromMembership({
   membershipId,
   roleName,
   tx = db,
-}: { membershipId: number; roleName: string } & TransactionParam): void {
-  const role = tx
+}: {
+  membershipId: number
+  roleName: string
+} & TransactionParam): Promise<void> {
+  const [role] = await tx
     .select()
     .from(schema.roles)
     .where(eq(schema.roles.name, roleName))
-    .get()
 
   if (!role) {
     throw new Error(
@@ -111,48 +113,47 @@ export function removeRoleFromMembership({
     )
   }
 
-  tx.delete(schema.membershipRoles)
+  await tx
+    .delete(schema.membershipRoles)
     .where(
       and(
         eq(schema.membershipRoles.membershipId, membershipId),
         eq(schema.membershipRoles.roleId, role.id),
       ),
     )
-    .run()
 }
 
 // removeMembership removes a membership from the database along with all associated roles
 
-export function removeMembership({
+export async function removeMembership({
   membershipId,
   tx = db,
 }: {
   membershipId: number
-} & TransactionParam): void {
+} & TransactionParam): Promise<void> {
   // Check if the membership exists
-  const existingMembership = tx
+  const [existingMembership] = await tx
     .select()
     .from(schema.memberships)
     .where(eq(schema.memberships.id, membershipId))
-    .get()
 
   if (!existingMembership) {
     throw new Error(`Membership with id ${membershipId} not found`)
   }
 
   // Remove related membershipRoles
-  tx.delete(schema.membershipRoles)
+  await tx
+    .delete(schema.membershipRoles)
     .where(eq(schema.membershipRoles.membershipId, membershipId))
-    .run()
 
   // Remove the membership
-  const result = tx
+  const [result] = await tx
     .delete(schema.memberships)
     .where(eq(schema.memberships.id, membershipId))
-    .run()
+    .returning()
 
   // Check if any rows were affected
-  if (result.changes === 0) {
+  if (!result) {
     throw new Error(`Failed to remove membership with id ${membershipId}`)
   }
 }

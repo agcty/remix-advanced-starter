@@ -22,13 +22,13 @@ describe("Memberships and Roles", () => {
       })
 
       // Attempt to create a second membership for the same user and organization
-      expect(() =>
+      await expect(() =>
         createMembership({
           userId: user.id,
           organizationId: organization.id,
         }),
-      ).toThrowError(
-        "UNIQUE constraint failed: multitenancy_memberships.user_id, multitenancy_memberships.organization_id",
+      ).rejects.toThrowError(
+        'duplicate key value violates unique constraint "mt_memberships_user_id_organization_id_unique"',
       )
 
       // Verify that only one membership exists
@@ -41,7 +41,6 @@ describe("Memberships and Roles", () => {
             eq(schema.memberships.organizationId, organization.id),
           ),
         )
-        .all()
 
       expect(memberships.length).toBe(1)
     })
@@ -59,13 +58,13 @@ describe("Memberships and Roles", () => {
       })
 
       // Attempt to add the same role again
-      expect(() =>
+      await expect(() =>
         addRoleToMembership({
           membershipId: membership.id,
           roleName: "OWNER",
         }),
-      ).toThrow(
-        "UNIQUE constraint failed: multitenancy_membership_roles.membership_id, multitenancy_membership_roles.role_id",
+      ).rejects.toThrow(
+        'duplicate key value violates unique constraint "mt_membership_roles_membership_id_role_id_pk"',
       ) // This should throw an error due to uniqueness constraint
 
       const membershipRoles = await db.query.membershipRoles.findMany({
@@ -125,12 +124,12 @@ describe("Memberships and Roles", () => {
         roleName: "ADMIN",
       })
 
-      removeRoleFromMembership({
+      await removeRoleFromMembership({
         membershipId: membership.id,
         roleName: "ADMIN",
       })
 
-      const remainingRole = await db
+      const [remainingRole] = await db
         .select()
         .from(schema.membershipRoles)
         .where(
@@ -145,7 +144,6 @@ describe("Memberships and Roles", () => {
             ),
           ),
         )
-        .get()
 
       expect(remainingRole).toBeUndefined()
     })
@@ -159,12 +157,12 @@ describe("Memberships and Roles", () => {
         organizationName: "Test Org",
       })
 
-      expect(() =>
+      await expect(() =>
         removeRoleFromMembership({
           membershipId: membership.id,
           roleName: "NON_EXISTENT_ROLE",
         }),
-      ).toThrow(
+      ).rejects.toThrow(
         "NON_EXISTENT_ROLE role not found. Please ensure the database is properly seeded.",
       )
     })
@@ -190,11 +188,10 @@ describe("Memberships and Roles", () => {
       await removeMembership({ membershipId: membership.id })
 
       // Check if the membership was removed
-      const removedMembership = await db
+      const [removedMembership] = await db
         .select()
         .from(schema.memberships)
         .where(eq(schema.memberships.id, membership.id))
-        .get()
 
       expect(removedMembership).toBeUndefined()
 
@@ -203,7 +200,6 @@ describe("Memberships and Roles", () => {
         .select()
         .from(schema.membershipRoles)
         .where(eq(schema.membershipRoles.membershipId, membership.id))
-        .all()
 
       expect(remainingRoles.length).toBe(0)
     })
@@ -211,9 +207,11 @@ describe("Memberships and Roles", () => {
     it("should throw an error when trying to remove a non-existent membership", async () => {
       const nonExistentMembershipId = 999999 // Assuming this ID doesn't exist
 
-      expect(() =>
+      await expect(() =>
         removeMembership({ membershipId: nonExistentMembershipId }),
-      ).toThrowError(`Membership with id ${nonExistentMembershipId} not found`)
+      ).rejects.toThrowError(
+        `Membership with id ${nonExistentMembershipId} not found`,
+      )
     })
 
     it("should not affect other memberships when removing one", async () => {
@@ -237,11 +235,10 @@ describe("Memberships and Roles", () => {
       await removeMembership({ membershipId: membership1.id })
 
       // Check if membership2 still exists
-      const remainingMembership = await db
+      const [remainingMembership] = await db
         .select()
         .from(schema.memberships)
         .where(eq(schema.memberships.id, membership2.id))
-        .get()
 
       expect(remainingMembership).toBeDefined()
       expect(remainingMembership!.id).toBe(membership2.id)

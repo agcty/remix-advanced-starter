@@ -2,6 +2,7 @@ import fs from "node:fs"
 import path from "node:path"
 import { config } from "dotenv"
 import { execaCommand } from "execa"
+import { teardown as resetDb } from "other/seed"
 import { initEnv } from "~/utils/env.server"
 
 config({ path: path.join(process.cwd(), ".env.test") })
@@ -38,6 +39,9 @@ export async function teardown() {
     } else {
       console.log(`Database file not found at ${dbPath}. Nothing to delete.`)
     }
+
+    console.log("Resetting database just to make sure...")
+    await resetDb()
 
     console.log("Cleanup complete.")
   } catch (error) {

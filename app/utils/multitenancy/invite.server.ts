@@ -31,14 +31,14 @@ export async function inviteUserToOrganization({
       }
 
       // If user doesn't exist, create a pending invitation
-      const membership = createPendingMembership({
+      const membership = await createPendingMembership({
         invitedEmail: email,
         organizationId,
         tx: trx,
       })
 
       // Add the specified role to the membership
-      addRoleToMembership({
+      await addRoleToMembership({
         membershipId: membership.id,
         roleName,
         tx: trx,
@@ -85,7 +85,7 @@ export async function acceptInvitation({
 
       // Update the membership to associate it with the user and remove the invitation details.
       // Setting the userId and removing the invitedEmail and invitedName fields signifies that the user has accepted the invitation.
-      const updatedMembership = await trx
+      const [updatedMembership] = await trx
         .update(schema.memberships)
         .set({
           userId,
@@ -95,7 +95,6 @@ export async function acceptInvitation({
         })
         .where(eq(schema.memberships.id, membershipId))
         .returning()
-        .get()
 
       // Update the user's active organization so they see the organization they were invited to immediately
       await trx
