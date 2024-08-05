@@ -63,7 +63,7 @@ describe("Role and Permission Helpers", () => {
     })
 
     it("should not allow duplicate permissions", async () => {
-      const permissionData = {
+      const permissionData: schema.InsertPermission = {
         entity: "unique_entity",
         action: "create",
         access: "any",
@@ -82,7 +82,7 @@ describe("Role and Permission Helpers", () => {
       const roleName = "TEST_ROLE_WITH_PERMISSION"
       const roleId = await createRole({ name: roleName })
 
-      const permissionData = {
+      const permissionData: schema.InsertPermission = {
         entity: "test_entity",
         action: "update",
         access: "any",
