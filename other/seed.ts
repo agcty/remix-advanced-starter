@@ -250,6 +250,18 @@ export async function teardown() {
 
       // tx.execute(sql`DELETE FROM sqlite_sequence`)
 
+      // Reset sequences for each table
+      await tx.execute(sql`
+        DO $$ DECLARE
+          seq RECORD;
+        BEGIN
+          FOR seq IN SELECT sequence_name FROM information_schema.sequences WHERE sequence_schema = 'public'
+          LOOP
+            EXECUTE 'ALTER SEQUENCE ' || quote_ident(seq.sequence_name) || ' RESTART WITH 1';
+          END LOOP;
+        END $$;
+      `)
+
       console.log("Database cleanup completed successfully")
     } catch (error) {
       console.error("Error during cleanup:", error)

@@ -13,7 +13,7 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { db } from "db.server"
 import { eq } from "drizzle-orm"
-import { users } from "schema/multitenancy"
+import { users } from "schema/postgres"
 import { cookieToInitialState, WagmiProvider } from "wagmi"
 import { GeneralErrorBoundary } from "./components/error-boundary"
 import { useTheme } from "./routes/api+/theme-switch"
