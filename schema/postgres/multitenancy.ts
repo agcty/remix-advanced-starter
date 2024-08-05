@@ -23,14 +23,14 @@ import { connections, passwords, sessions } from "./auth"
 // In some organizations, they might be an admin, in others a moderator, and in others simply a basic user.
 // A user can have multiple roles in the same organization as well but only one membership per organization.
 
-export const organizations = pgTable("multitenancy_organizations", {
+export const organizations = pgTable("mt_organizations", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 })
 
-export const users = pgTable("multitenancy_users", {
+export const users = pgTable("mt_users", {
   id: serial("id").primaryKey(),
   name: text("name"),
   email: text("email").notNull().unique(),
@@ -43,7 +43,7 @@ export const users = pgTable("multitenancy_users", {
 })
 
 export const memberships = pgTable(
-  "multitenancy_memberships",
+  "mt_memberships",
   {
     id: serial("id").primaryKey(),
     organizationId: integer("organization_id")
@@ -68,7 +68,7 @@ export const memberships = pgTable(
 )
 
 export const permissions = pgTable(
-  "multitenancy_permissions",
+  "mt_permissions",
   {
     id: serial("id").primaryKey(),
     action: text("action").notNull(),
@@ -81,14 +81,14 @@ export const permissions = pgTable(
   }),
 )
 
-export const roles = pgTable("multitenancy_roles", {
+export const roles = pgTable("mt_roles", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
   description: text("description").default(""),
 })
 
 export const rolePermissions = pgTable(
-  "multitenancy_role_permissions",
+  "mt_role_permissions",
   {
     roleId: integer("role_id")
       .notNull()
@@ -106,7 +106,7 @@ export const rolePermissions = pgTable(
 )
 
 export const membershipRoles = pgTable(
-  "multitenancy_membership_roles",
+  "mt_membership_roles",
   {
     membershipId: integer("membership_id")
       .notNull()

@@ -22,7 +22,7 @@ import { connections, passwords, sessions } from "./auth"
 // In some organizations, they might be an admin, in others a moderator, and in others simply a basic user.
 // A user can have multiple roles in the same organization as well but only one membership per organization.
 
-export const organizations = sqliteTable("multitenancy_organizations", {
+export const organizations = sqliteTable("mt_organizations", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name", { length: 255 }).notNull(),
   createdAt: integer("created_at", { mode: "timestamp" })
@@ -33,7 +33,7 @@ export const organizations = sqliteTable("multitenancy_organizations", {
     .default(sql`CURRENT_TIMESTAMP`),
 })
 
-export const users = sqliteTable("multitenancy_users", {
+export const users = sqliteTable("mt_users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name", { length: 255 }),
   email: text("email", { length: 320 }).notNull().unique(),
@@ -52,7 +52,7 @@ export const users = sqliteTable("multitenancy_users", {
 })
 
 export const memberships = sqliteTable(
-  "multitenancy_memberships",
+  "mt_memberships",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     organizationId: integer("organization_id")
@@ -81,7 +81,7 @@ export const memberships = sqliteTable(
 )
 
 export const permissions = sqliteTable(
-  "multitenancy_permissions",
+  "mt_permissions",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     action: text("action", {
@@ -96,14 +96,14 @@ export const permissions = sqliteTable(
   }),
 )
 
-export const roles = sqliteTable("multitenancy_roles", {
+export const roles = sqliteTable("mt_roles", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name", { length: 255 }).notNull().unique(),
   description: text("description", { length: 1000 }).default(""),
 })
 
 export const rolePermissions = sqliteTable(
-  "multitenancy_role_permissions",
+  "mt_role_permissions",
   {
     roleId: integer("role_id")
       .notNull()
@@ -121,7 +121,7 @@ export const rolePermissions = sqliteTable(
 )
 
 export const membershipRoles = sqliteTable(
-  "multitenancy_membership_roles",
+  "mt_membership_roles",
   {
     membershipId: integer("membership_id")
       .notNull()
