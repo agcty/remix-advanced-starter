@@ -2,7 +2,7 @@
 import { type LoaderFunctionArgs } from "@remix-run/node"
 import { db } from "db.server"
 import { count } from "drizzle-orm"
-import { organizations } from "schema/multitenancy"
+import { organizations } from "schema/postgres"
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const host =

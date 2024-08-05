@@ -1,6 +1,6 @@
 import { db } from "db.server"
 import { eq } from "drizzle-orm"
-import { membershipRoles, memberships, roles, users } from "schema/multitenancy"
+import { membershipRoles, memberships, roles, users } from "schema/postgres"
 
 export async function inviteUserToOrganization(
   organizationId: number,
