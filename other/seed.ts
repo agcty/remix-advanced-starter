@@ -1,27 +1,73 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from "db.server"
 import { and, eq, sql } from "drizzle-orm"
-import { type SQLiteTableWithColumns } from "drizzle-orm/sqlite-core"
 import * as schema from "schema/postgres"
+import {
+  addPermissionToRole,
+  createPermission,
+} from "~/utils/multitenancy/permissions.server"
+import { createRole } from "~/utils/multitenancy/roles.server"
 
 export async function seed(): Promise<void> {
   try {
-    // Create basic roles and permissions: OWNER, ADMIN, MEMBER
-    const roles = await createDefaultRoles()
-    const permissions = await createDefaultPermissions()
-    await createRolePermissions({ roles, permissions })
+    console.log("Starting seeding process...")
 
-    // Create organizations, users, and memberships for testing
-    // const organizations = await createMockOrganizations({ amount: 2 })
-    // const users = await createMockUsers({ amount: 3, organizations })
-    // const memberships = await createMockMemberships({ users, organizations })
-    // await createMembershipRoles({ memberships, roles })
+    // Create default roles
+    const ownerRoleId = await createRole({
+      name: "OWNER",
+      description: "Full access to organization resources",
+    })
+    const adminRoleId = await createRole({
+      name: "ADMIN",
+      description: "Manage organization resources and users",
+    })
+    const memberRoleId = await createRole({
+      name: "MEMBER",
+      description: "Basic access to organization resources",
+    })
+
+    console.log("Default roles created successfully")
+
+    // Define entities, actions, and access levels
+    const entities = ["user", "organization", "membership", "role"]
+    const actions = ["create", "read", "update", "delete"]
+    const accessLevels = ["own", "any"]
+
+    // Create permissions and assign them to roles
+    for (const entity of entities) {
+      for (const action of actions) {
+        for (const access of accessLevels) {
+          // Skip 'create' and 'delete' for 'own' access as they don't make sense
+          if (
+            (action === "create" || action === "delete") &&
+            access === "own"
+          ) {
+            continue
+          }
+
+          const permissionId = await createPermission({
+            entity,
+            action,
+            access,
+          })
+
+          // Assign permissions to roles based on their level
+          await addPermissionToRole({ roleName: "OWNER", permissionId })
+          await addPermissionToRole({ roleName: "ADMIN", permissionId })
+
+          // Assign 'own' access permissions to MEMBER role
+          if (access === "own") {
+            await addPermissionToRole({ roleName: "MEMBER", permissionId })
+          }
+        }
+      }
+    }
+
+    console.log("Permissions created and assigned to roles successfully")
 
     console.log("Seeding completed successfully")
   } catch (error) {
     console.error("Error during seeding:", error)
-  } finally {
-    console.log("Exiting seeding function")
   }
 }
 

@@ -1,5 +1,5 @@
 import { db } from "db.server"
-import { and, eq, inArray, isNull, sql } from "drizzle-orm"
+import { and, eq, sql } from "drizzle-orm"
 import {
   membershipRoles,
   memberships,
@@ -8,9 +8,9 @@ import {
   roles,
 } from "schema/postgres"
 
-type Action = "create" | "read" | "update" | "delete"
-type Entity = string
-type Access = "own" | "any"
+export type Action = "create" | "read" | "update" | "delete"
+export type Entity = string
+export type Access = "own" | "any"
 export type PermissionString =
   | `${Action}:${Entity}`
   | `${Action}:${Entity}:${Access}`
@@ -91,8 +91,8 @@ export async function userHasPermission({
         eq(permissions.entity, sql.placeholder("entity")),
         eq(permissions.action, sql.placeholder("action")),
         access
-          ? inArray(permissions.access, sql.placeholder("access"))
-          : isNull(permissions.access),
+          ? sql`${permissions.access} = ANY(${sql.placeholder("access")})`
+          : sql`${permissions.access} IS NULL`,
       ),
     )
     .prepare("check_user_permission")
@@ -171,4 +171,84 @@ export async function getPermissionsByRoleName(roleName: string) {
     .where(eq(roles.name, roleName))
 
   return result
+}
+
+export async function createPermission({
+  entity,
+  action,
+  access,
+}: {
+  entity: Entity
+  action: Action
+  access: Access
+}): Promise<number> {
+  const [result] = await db
+    .insert(permissions)
+    .values({
+      entity,
+      action,
+      access,
+      description: `${action} ${access} ${entity}`,
+    })
+    .returning({ id: permissions.id })
+
+  return result.id
+}
+
+export async function addPermissionToRole({
+  roleName,
+  permissionId,
+}: {
+  roleName: string
+  permissionId: number
+}): Promise<void> {
+  const role = await db.query.roles.findFirst({
+    where: eq(roles.name, roleName),
+  })
+
+  if (!role) {
+    throw new Error(`Role "${roleName}" not found`)
+  }
+
+  await db.insert(rolePermissions).values({
+    roleId: role.id,
+    permissionId,
+  })
+}
+
+export async function removePermissionFromRole({
+  roleName,
+  permissionId,
+}: {
+  roleName: string
+  permissionId: number
+}): Promise<void> {
+  const role = await db.query.roles.findFirst({
+    where: eq(roles.name, roleName),
+  })
+
+  if (!role) {
+    throw new Error(`Role "${roleName}" not found`)
+  }
+
+  await db
+    .delete(rolePermissions)
+    .where(
+      and(
+        eq(rolePermissions.roleId, role.id),
+        eq(rolePermissions.permissionId, permissionId),
+      ),
+    )
+}
+
+export async function deletePermission(permissionId: number): Promise<void> {
+  const permission = await db.query.permissions.findFirst({
+    where: eq(permissions.id, permissionId),
+  })
+
+  if (!permission) {
+    throw new Error(`Permission with id ${permissionId} not found`)
+  }
+
+  await db.delete(permissions).where(eq(permissions.id, permissionId))
 }

@@ -1,5 +1,3 @@
-import { db } from "db.server"
-import { eq } from "drizzle-orm"
 import type * as schema from "schema/postgres"
 import { beforeEach, describe, expect, it } from "vitest"
 import { addRoleToMembership } from "~/utils/multitenancy/membership.server"
@@ -29,8 +27,8 @@ describe("User Permissions and Roles", () => {
     organization = result.organization
     membership = result.membership
 
-    // const perms = await getPermissionsByRoleName("ADMIN")
-    // console.log({ perms })
+    const perms = await getPermissionsByRoleName("ADMIN")
+    console.log({ perms })
 
     // const perms = await db.select().from(schema.permissions)
     // console.log({ perms })
@@ -73,10 +71,16 @@ describe("User Permissions and Roles", () => {
       const hasOwnPermission = await userHasPermission({
         userId: user.id,
         organizationId: organization.id,
-        permissionString: "update:membership:own" as PermissionString,
+        permissionString: "create:user:any" as PermissionString,
       })
 
       const hasAnyPermission = await userHasPermission({
+        userId: user.id,
+        organizationId: organization.id,
+        permissionString: "read:user:own" as PermissionString,
+      })
+
+      const hasMembershipPermission = await userHasPermission({
         userId: user.id,
         organizationId: organization.id,
         permissionString: "update:membership:any" as PermissionString,
@@ -84,6 +88,7 @@ describe("User Permissions and Roles", () => {
 
       expect(hasOwnPermission).toBe(true)
       expect(hasAnyPermission).toBe(true) // Assuming ADMIN has 'any' access
+      expect(hasMembershipPermission).toBe(true) // Assuming ADMIN has 'any' access
     })
   })
 
