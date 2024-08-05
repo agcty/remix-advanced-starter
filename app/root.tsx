@@ -40,7 +40,7 @@ export const loader: LoaderFunction = async ({ request }) => {
   const { toast, headers: toastHeaders } = await getToast(request)
   const timings = makeTimings("get user")
 
-  const user = await db.select().from(users).where(eq(users.id, 1)).get()
+  const [user] = await db.select().from(users).where(eq(users.id, 1))
 
   return json(
     {
