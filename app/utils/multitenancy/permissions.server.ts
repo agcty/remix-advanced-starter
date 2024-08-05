@@ -1,6 +1,7 @@
 import { db } from "db.server"
 import { and, eq, sql } from "drizzle-orm"
 import {
+  type InsertPermission,
   membershipRoles,
   memberships,
   permissions,
@@ -8,9 +9,9 @@ import {
   roles,
 } from "schema/postgres"
 
-type Action = "create" | "read" | "update" | "delete"
-type Entity = string
-type Access = "own" | "any" | "own,any" | "any,own"
+export type Action = "create" | "read" | "update" | "delete"
+export type Entity = string
+export type Access = "own" | "any" | "own,any" | "any,own"
 
 export type PermissionString =
   | `${Action}:${Entity}`
@@ -92,8 +93,10 @@ export async function userHasPermission({
         eq(permissions.entity, sql.placeholder("entity")),
         eq(permissions.action, sql.placeholder("action")),
         access
-          ? sql`${permissions.access} = ANY(${sql.placeholder("access")})`
-          : sql`${permissions.access} IS NULL`,
+          ? // If access is provided, check if the user has that access level
+            sql`${permissions.access} = ANY(${sql.placeholder("access")})`
+          : // If access is not provided, check if the permission has any access level
+            sql`${permissions.access} IS NOT NULL`,
       ),
     )
     .prepare("check_user_permission")
@@ -105,8 +108,6 @@ export async function userHasPermission({
     action,
     access: access || [],
   })
-
-  console.log({ userPermissions })
 
   return userPermissions.length > 0
 }
@@ -178,11 +179,7 @@ export async function createPermission({
   entity,
   action,
   access,
-}: {
-  entity: Entity
-  action: Action
-  access: Access
-}): Promise<number> {
+}: InsertPermission): Promise<number> {
   const [result] = await db
     .insert(permissions)
     .values({

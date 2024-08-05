@@ -16,15 +16,15 @@ export async function seed(): Promise<void> {
     console.log("Starting seeding process...")
 
     // Create default roles
-    const ownerRoleId = await createRole({
+    await createRole({
       name: "OWNER",
       description: "Full access to organization resources",
     })
-    const adminRoleId = await createRole({
+    await createRole({
       name: "ADMIN",
       description: "Manage organization resources and users",
     })
-    const memberRoleId = await createRole({
+    await createRole({
       name: "MEMBER",
       description: "Basic access to organization resources",
     })
@@ -40,14 +40,6 @@ export async function seed(): Promise<void> {
     for (const entity of entities) {
       for (const action of actions) {
         for (const access of accessLevels) {
-          // Skip 'create' and 'delete' for 'own' access as they don't make sense
-          if (
-            (action === "create" || action === "delete") &&
-            access === "own"
-          ) {
-            continue
-          }
-
           const permissionId = await createPermission({
             entity: entity as Entity,
             action: action as Action,

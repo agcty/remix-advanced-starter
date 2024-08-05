@@ -5,6 +5,7 @@ import {
   addPermissionToRole,
   createPermission,
   deletePermission,
+  getPermissionsByRoleName,
   type PermissionString,
   removePermissionFromRole,
   userHasPermission,
@@ -23,7 +24,7 @@ describe("User Permissions and Roles", () => {
     const result = await createUserWithOrganization({
       user: {
         name: "Test User",
-        email: "test@example.com",
+        email: "permission_test@example.com",
       },
       organizationName: "Test Org",
     })
@@ -36,19 +37,44 @@ describe("User Permissions and Roles", () => {
 
   describe("userHasPermission", () => {
     it("should return true when user has the specified permission", async () => {
-      // Add the UNIQUE_PERMISSION_ROLE role to the user's membership
-      await addRoleToMembership({
-        membershipId: membership.id,
-        roleName: "UNIQUE_PERMISSION_ROLE",
-      })
-
-      const hasPermission = await userHasPermission({
+      const hasPermission1 = await userHasPermission({
         userId: user.id,
         organizationId: organization.id,
         permissionString: "read:user:own" as PermissionString,
       })
 
-      expect(hasPermission).toBe(true)
+      const hasPermission2 = await userHasPermission({
+        userId: user.id,
+        organizationId: organization.id,
+        permissionString: "read:user:any" as PermissionString,
+      })
+
+      // needs both permissions
+      const hasPermission3 = await userHasPermission({
+        userId: user.id,
+        organizationId: organization.id,
+        permissionString: "read:user:own,any" as PermissionString,
+      })
+
+      // needs both permissions
+      const hasPermission4 = await userHasPermission({
+        userId: user.id,
+        organizationId: organization.id,
+        permissionString: "read:user:any,own" as PermissionString,
+      })
+
+      // means user has either own or any, all we care about is that they have one of them
+      const hasPermission5 = await userHasPermission({
+        userId: user.id,
+        organizationId: organization.id,
+        permissionString: "read:user" as PermissionString,
+      })
+
+      expect(hasPermission1).toBe(true)
+      expect(hasPermission2).toBe(true)
+      expect(hasPermission3).toBe(true)
+      expect(hasPermission4).toBe(true)
+      expect(hasPermission5).toBe(true)
     })
 
     it("should return false when user doesn't have the specified permission", async () => {
@@ -68,27 +94,61 @@ describe("User Permissions and Roles", () => {
         roleName: "UNIQUE_PERMISSION_ROLE",
       })
 
+      await addPermissionToRole({
+        roleName: "UNIQUE_PERMISSION_ROLE",
+        permissionId: await createPermission({
+          entity: "test1",
+          action: "create",
+          access: "own",
+        }),
+      })
+
+      const hasAdminRole = await userHasRole({
+        roleName: "OWNER",
+        userId: user.id,
+        organizationId: organization.id,
+      })
+
+      expect(hasAdminRole).toBe(true)
+
+      const hasUniquePermissionRole = await userHasRole({
+        roleName: "UNIQUE_PERMISSION_ROLE",
+        userId: user.id,
+        organizationId: organization.id,
+      })
+
+      expect(hasUniquePermissionRole).toBe(true)
+
+      console.log({ ownerPerms: await getPermissionsByRoleName("OWNER") })
+
       const hasOwnPermission = await userHasPermission({
         userId: user.id,
         organizationId: organization.id,
-        permissionString: "create:user:any" as PermissionString,
+        permissionString: "create:user:own",
       })
 
       const hasAnyPermission = await userHasPermission({
         userId: user.id,
         organizationId: organization.id,
-        permissionString: "read:user:own" as PermissionString,
+        permissionString: "read:user:any",
+      })
+
+      const hasBothPermissions = await userHasPermission({
+        userId: user.id,
+        organizationId: organization.id,
+        permissionString: "read:user:own,any",
       })
 
       const hasMembershipPermission = await userHasPermission({
         userId: user.id,
         organizationId: organization.id,
-        permissionString: "update:membership:any" as PermissionString,
+        permissionString: "create:test1:own",
       })
 
       expect(hasOwnPermission).toBe(true)
       expect(hasAnyPermission).toBe(true) // Assuming UNIQUE_PERMISSION_ROLE has 'any' access
       expect(hasMembershipPermission).toBe(true) // Assuming UNIQUE_PERMISSION_ROLE has 'any' access
+      expect(hasBothPermissions).toBe(true) // Assuming UNIQUE_PERMISSION_ROLE has 'any' access
     })
   })
 
@@ -180,7 +240,7 @@ describe("User Permissions and Roles", () => {
       const hasPermission = await userHasPermission({
         userId: user.id,
         organizationId: organization.id,
-        permissionString: "create:uniqueperm:any" as PermissionString,
+        permissionString: "create:uniqueperm" as PermissionString,
       })
 
       expect(hasPermission).toBe(false) // Permission created but not assigned to any role yet
