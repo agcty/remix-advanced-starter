@@ -2,7 +2,6 @@ import type * as schema from "schema/postgres"
 import { beforeEach, describe, expect, it } from "vitest"
 import { addRoleToMembership } from "~/utils/multitenancy/membership.server"
 import {
-  getPermissionsByRoleName,
   type PermissionString,
   userHasPermission,
   userHasRole,
@@ -26,12 +25,6 @@ describe("User Permissions and Roles", () => {
     user = result.user
     organization = result.organization
     membership = result.membership
-
-    const perms = await getPermissionsByRoleName("ADMIN")
-    console.log({ perms })
-
-    // const perms = await db.select().from(schema.permissions)
-    // console.log({ perms })
   })
 
   describe("userHasPermission", () => {
@@ -150,7 +143,7 @@ describe("User Permissions and Roles", () => {
       const hasPermission = await userHasPermission({
         userId: user.id,
         organizationId: organization.id,
-        permissionString: "fly:spaceship" as PermissionString, // Non-existent permission
+        permissionString: "read:spaceship" as PermissionString, // Non-existent permission
       })
 
       expect(hasPermission).toBe(false)

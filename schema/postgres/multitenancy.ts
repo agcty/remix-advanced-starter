@@ -5,6 +5,7 @@ import {
 } from "drizzle-orm"
 import {
   integer,
+  pgEnum,
   pgTable,
   primaryKey,
   serial,
@@ -30,6 +31,11 @@ export const organizations = pgTable("mt_organizations", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 })
 
+export const globalRoleEnum = pgEnum("user_global_role", [
+  "SUPERADMIN",
+  "CUSTOMER",
+])
+
 export const users = pgTable("mt_users", {
   id: serial("id").primaryKey(),
   name: text("name"),
@@ -37,7 +43,7 @@ export const users = pgTable("mt_users", {
   activeOrganizationId: integer("active_organization_id")
     .notNull()
     .references(() => organizations.id, { onUpdate: "cascade" }),
-  globalRole: text("global_role").notNull().default("CUSTOMER"),
+  globalRole: globalRoleEnum("global_role").notNull().default("CUSTOMER"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 })
@@ -67,13 +73,21 @@ export const memberships = pgTable(
   }),
 )
 
+export const permissionActionEnum = pgEnum("permission_action", [
+  "create",
+  "read",
+  "update",
+  "delete",
+])
+export const permissionAccessEnum = pgEnum("permission_access", ["own", "any"])
+
 export const permissions = pgTable(
   "mt_permissions",
   {
     id: serial("id").primaryKey(),
-    action: text("action").notNull(),
+    action: permissionActionEnum("action").notNull(),
     entity: text("entity").notNull(),
-    access: text("access").notNull(),
+    access: permissionAccessEnum("access").notNull(),
     description: text("description").default(""),
   },
   table => ({
@@ -192,29 +206,22 @@ export const insertUserSchema = createInsertSchema(users, {
 })
 
 export const selectUserSchema = createSelectSchema(users)
-
 export const insertOrganizationSchema = createInsertSchema(organizations)
-
 export const insertMembershipSchema = createInsertSchema(memberships)
-
-export const insertPermissionSchema = createInsertSchema(permissions, {
-  action: z.enum(["create", "read", "update", "delete"]),
-  access: z.enum(["own", "any"]),
-})
-
 export const insertRoleSchema = createInsertSchema(roles)
+export const insertPermissionSchema = createInsertSchema(permissions)
 
 // Add these type definitions at the end of your schema file
 export type User = InferSelectModel<typeof users>
 export type Organization = InferSelectModel<typeof organizations>
 export type Membership = InferSelectModel<typeof memberships>
 export type Role = InferSelectModel<typeof roles>
+export type Permission = InferSelectModel<typeof permissions>
 
 export type InsertUser = InferInsertModel<typeof users>
 export type InsertOrganization = InferInsertModel<typeof organizations>
 export type InsertMembership = InferInsertModel<typeof memberships>
 export type InsertRole = InferInsertModel<typeof roles>
-export type Permission = InferSelectModel<typeof permissions>
 export type InsertPermission = InferInsertModel<typeof permissions>
 
 // AI Questions you can ask to understand this file better:
