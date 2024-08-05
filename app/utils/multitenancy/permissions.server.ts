@@ -8,9 +8,10 @@ import {
   roles,
 } from "schema/postgres"
 
-export type Action = "create" | "read" | "update" | "delete"
-export type Entity = string
-export type Access = "own" | "any"
+type Action = "create" | "read" | "update" | "delete"
+type Entity = string
+type Access = "own" | "any" | "own,any" | "any,own"
+
 export type PermissionString =
   | `${Action}:${Entity}`
   | `${Action}:${Entity}:${Access}`
@@ -33,7 +34,7 @@ export function parsePermissionString(permissionString: PermissionString) {
   return {
     action,
     entity,
-    access: access ? [access as Access] : undefined,
+    access: access ? (access.split(",") as Array<Access>) : undefined,
   }
 }
 
