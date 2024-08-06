@@ -15,7 +15,8 @@
     "typecheck": "tsc",
     "seed": "tsx other/seed-current-db.ts",
     "teardown": "tsx other/teardown-current-db.ts",
-    "test": "vitest"
+    "test": "vitest",
+    "coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@conform-to/react": "^1.1.5",

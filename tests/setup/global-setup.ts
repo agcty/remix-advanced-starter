@@ -2,7 +2,6 @@ import fs from "node:fs"
 import path from "node:path"
 import { config } from "dotenv"
 import { execaCommand } from "execa"
-import { teardown as resetDb } from "other/seed"
 import { initEnv } from "~/utils/env.server"
 
 config({ path: path.join(process.cwd(), ".env.test") })
@@ -41,6 +40,8 @@ export async function teardown() {
     }
 
     console.log("Resetting database just to make sure...")
+    // Importing the function dynamically to make sure env is initialized
+    const { teardown: resetDb } = await import("other/seed")
     await resetDb()
 
     console.log("Cleanup complete.")
