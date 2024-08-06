@@ -12,6 +12,7 @@ env:
   POSTGRES_DB: testdb
   POSTGRES_USER: testuser
   POSTGRES_PASSWORD: testpass
+  PNPM_VERSION: 9
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -22,57 +23,110 @@ permissions:
   contents: read
 
 jobs:
-  lint:
-    name: ⬣ ESLint
+  setup:
+    name: 🏗 Setup
     runs-on: ubuntu-22.04
-
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install pnpm
+      - name: 📥 Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: ${{ env.PNPM_VERSION }}
 
-      - name: Use Node.js ${{ env.NODE_VERSION }}
+      - name: 🏗 Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: pnpm install
+
+      - name: 💾 Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
+      - name: 🏗 Build project
+        run: pnpm run build
+
+      - name: 💾 Cache build
+        uses: actions/cache@v3
+        with:
+          path: |
+            build
+            server-build
+          key: ${{ runner.os }}-remix-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
+          restore-keys: |
+            ${{ runner.os }}-remix-
+
+  lint:
+    name: ⬣ ESLint
+    needs: setup
+    runs-on: ubuntu-22.04
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: 📥 Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: 📦 Restore dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: 🔬 Lint
         run: pnpm run lint
 
   typecheck:
     name: ʦ TypeScript
+    needs: setup
     runs-on: ubuntu-22.04
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install pnpm
+      - name: 📥 Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: ${{ env.PNPM_VERSION }}
 
-      - name: Use Node.js ${{ env.NODE_VERSION }}
+      - name: 🏗 Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
 
-      - name: Install dependencies
-        run: pnpm install
+      - name: 📦 Restore dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
 
       - name: 🔎 Type check
         run: pnpm run typecheck
 
   test:
     name: 🧪 Test
+    needs: setup
     runs-on: ubuntu-22.04
     services:
       postgres:
@@ -93,19 +147,31 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
 
-      - name: Install pnpm
+      - name: 📥 Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: ${{ env.PNPM_VERSION }}
 
-      - name: Use Node.js ${{ env.NODE_VERSION }}
+      - name: 🏗 Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "pnpm"
 
-      - name: Install dependencies
-        run: pnpm install
+      - name: 📦 Restore dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+
+      - name: 📦 Restore build
+        uses: actions/cache@v3
+        with:
+          path: |
+            build
+            server-build
+          key: ${{ runner.os }}-remix-${{ hashFiles('**.[jt]s', '**.[jt]sx') }}
 
       - name: 🧪 Run tests
         run: pnpm run test
