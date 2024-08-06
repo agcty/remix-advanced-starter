@@ -6,6 +6,7 @@ on:
       - dev
   pull_request: {}
 
+  # test
 env:
   NODE_VERSION: "20"
   SENTRY_ORG: ${{ secrets.SENTRY_AUTH }}
