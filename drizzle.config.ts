@@ -1,14 +1,10 @@
 import { defineConfig } from "drizzle-kit"
 
-let isProd = process.env.NODE_ENV === "production"
-
-isProd = true
-
 export default defineConfig({
-  schema: "./schema/*",
+  schema: "./schema/postgres/index.ts",
   out: "./db/out",
-  dialect: "sqlite",
+  dialect: "postgresql",
   dbCredentials: {
-    url: isProd ? "sqlite.db" : "sqlite.db",
+    url: process.env.DATABASE_URL,
   },
 })

@@ -32,6 +32,24 @@ From project root
     fly deploy
 ```
 
+## Launch local postgres database
+
+```bash
+docker run -d \
+  -e POSTGRES_DB=testdb \
+  -e POSTGRES_USER=testuser \
+  -e POSTGRES_PASSWORD=testpass \
+  -p 5432:5432 \
+  postgres:16-alpine
+
+docker run \
+  -e POSTGRES_DB=testdb \
+  -e POSTGRES_USER=testuser \
+  -e POSTGRES_PASSWORD=testpass \
+  -p 5432:5432 \
+  postgres:16-alpine
+```
+
 ## Debug docker locally
 
 ```bash
