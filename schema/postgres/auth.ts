@@ -40,13 +40,21 @@ export const verifications = pgTable(
   {
     id: serial("id").primaryKey(),
     createdAt: timestamp("created_at").default(sql`CURRENT_TIMESTAMP`),
+    // The type of verification, e.g. "email" or "phone"
     type: text("type").notNull(),
+    // The thing we're trying to verify, e.g. a user's email or phone number
     target: text("target").notNull(),
+    // The secret key used to generate the otp
     secret: text("secret").notNull(),
+    // The algorithm used to generate the otp
     algorithm: text("algorithm").notNull(),
+    // The number of digits in the otp
     digits: integer("digits").notNull(),
+    // The number of seconds the otp is valid for
     period: integer("period").notNull(),
+    // The valid characters for the otp
     charSet: text("char_set").notNull(),
+    // When it's safe to delete this verification
     expiresAt: timestamp("expires_at"),
   },
   table => ({
@@ -74,9 +82,6 @@ export const connections = pgTable(
 )
 
 export const insertPasswordSchema = createInsertSchema(passwords)
-
 export const insertSessionSchema = createInsertSchema(sessions)
-
 export const insertVerificationSchema = createInsertSchema(verifications)
-
 export const insertConnectionSchema = createInsertSchema(connections)
