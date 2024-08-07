@@ -1,4 +1,6 @@
-import type * as schema from "schema/postgres"
+import { db } from "db.server"
+import { eq } from "drizzle-orm"
+import * as schema from "schema/postgres"
 import { beforeEach, describe, expect, it } from "vitest"
 import { addRoleToMembership } from "~/utils/multitenancy/membership.server"
 import {
@@ -9,7 +11,9 @@ import {
   type PermissionString,
   removePermissionFromRole,
   userHasPermission,
+  userHasPermissionInActiveOrg,
   userHasRole,
+  userHasRoleInActiveOrg,
 } from "~/utils/multitenancy/permissions.server"
 import { createRole } from "~/utils/multitenancy/roles.server"
 import { createUserWithOrganization } from "~/utils/multitenancy/user.server"
@@ -355,6 +359,115 @@ describe("User Permissions and Roles", () => {
       await expect(deletePermission(99999)).rejects.toThrow(
         "Permission with id 99999 not found",
       )
+    })
+  })
+})
+
+describe("User Permissions and Roles in Active Organization", () => {
+  let user: schema.User
+  let organization: schema.Organization
+  let membership: schema.Membership
+  let secondOrganization: schema.Organization
+
+  beforeEach(async () => {
+    // Create a user with an organization before each test
+    const result = await createUserWithOrganization({
+      user: {
+        name: "Test User",
+        email: "active_org_test@example.com",
+      },
+      organizationName: "Test Org",
+    })
+    user = result.user
+    organization = result.organization
+    membership = result.membership
+
+    // Create a second organization
+    const secondOrgResult = await createUserWithOrganization({
+      user: {
+        name: "Second User",
+        email: "second_org_test@example.com",
+      },
+      organizationName: "Second Org",
+    })
+    secondOrganization = secondOrgResult.organization
+
+    await createRole({ name: "ACTIVE_ORG_ROLE" })
+    await addRoleToMembership({
+      membershipId: membership.id,
+      roleName: "ACTIVE_ORG_ROLE",
+    })
+  })
+
+  describe("userHasPermissionInActiveOrg", () => {
+    it("should return true when user has the specified permission in active organization", async () => {
+      const hasPermission = await userHasPermissionInActiveOrg({
+        userId: user.id,
+        permissionString: "read:user:own" as PermissionString,
+      })
+
+      expect(hasPermission).toBe(true)
+    })
+
+    it("should return false when user doesn't have the specified permission in active organization", async () => {
+      const hasPermission = await userHasPermissionInActiveOrg({
+        userId: user.id,
+        permissionString: "delete:entitythatdoesntexist" as PermissionString,
+      })
+
+      expect(hasPermission).toBe(false)
+    })
+
+    it("should use the correct active organization", async () => {
+      // Change user's active organization
+      await db
+        .update(schema.users)
+        .set({ activeOrganizationId: secondOrganization.id })
+        .where(eq(schema.users.id, user.id))
+
+      // User shouldn't have permissions in the second organization
+      const hasPermission = await userHasPermissionInActiveOrg({
+        userId: user.id,
+        permissionString: "read:user:own" as PermissionString,
+      })
+
+      expect(hasPermission).toBe(false)
+    })
+  })
+
+  describe("userHasRoleInActiveOrg", () => {
+    it("should return true when user has the specified role in active organization", async () => {
+      const hasRole = await userHasRoleInActiveOrg({
+        userId: user.id,
+        roleName: "ACTIVE_ORG_ROLE",
+      })
+
+      expect(hasRole).toBe(true)
+    })
+
+    it("should return false when user doesn't have the specified role in active organization", async () => {
+      const hasRole = await userHasRoleInActiveOrg({
+        userId: user.id,
+        roleName: "NON_EXISTENT_ROLE",
+      })
+
+      expect(hasRole).toBe(false)
+    })
+
+    it("should use the correct active organization", async () => {
+      // Change user's active organization
+      await db
+        .update(schema.users)
+        .set({ activeOrganizationId: secondOrganization.id })
+        .where(eq(schema.users.id, user.id))
+
+      // User shouldn't have roles in the second organization
+      const hasRole = await userHasRoleInActiveOrg({
+        userId: user.id,
+        roleName: "ACTIVE_ORG_ROLE",
+      })
+
+      expect(hasRole).toBe(false)
     })
   })
 })

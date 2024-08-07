@@ -7,6 +7,7 @@ import {
   permissions,
   rolePermissions,
   roles,
+  users,
 } from "schema/postgres"
 
 export type Action = "create" | "read" | "update" | "delete"
@@ -155,6 +156,74 @@ export async function userHasRole({
   })
 
   return userRoles.length > 0
+}
+
+/**
+ * Fetches the active organization ID for a given user.
+ *
+ * @param userId - The ID of the user.
+ * @returns A Promise that resolves to the active organization ID or null if not found.
+ */
+async function getActiveOrganizationId({
+  userId,
+}: {
+  userId: number
+}): Promise<number | null> {
+  const result = await db
+    .select({ activeOrganizationId: users.activeOrganizationId })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1)
+
+  return result.length > 0 ? result[0].activeOrganizationId : null
+}
+
+/**
+ * Checks if a user has a specific permission within their active organization.
+ *
+ * @param params - An object containing userId and permissionString.
+ * @returns A Promise that resolves to a boolean indicating whether the user has the specified permission.
+ * @throws An error if the user doesn't have an active organization.
+ */
+export async function userHasPermissionInActiveOrg({
+  userId,
+  permissionString,
+}: Omit<UserPermissionParams, "organizationId">): Promise<boolean> {
+  const activeOrganizationId = await getActiveOrganizationId({ userId })
+
+  if (activeOrganizationId === null) {
+    throw new Error("User does not have an active organization")
+  }
+
+  return userHasPermission({
+    userId,
+    organizationId: activeOrganizationId,
+    permissionString,
+  })
+}
+
+/**
+ * Checks if a user has a specific role within their active organization.
+ *
+ * @param params - An object containing userId and roleName.
+ * @returns A Promise that resolves to a boolean indicating whether the user has the specified role.
+ * @throws An error if the user doesn't have an active organization.
+ */
+export async function userHasRoleInActiveOrg({
+  userId,
+  roleName,
+}: Omit<UserRoleParams, "organizationId">): Promise<boolean> {
+  const activeOrganizationId = await getActiveOrganizationId({ userId })
+
+  if (activeOrganizationId === null) {
+    throw new Error("User does not have an active organization")
+  }
+
+  return userHasRole({
+    userId,
+    organizationId: activeOrganizationId,
+    roleName,
+  })
 }
 
 export async function getPermissionsByRoleName(roleName: string) {

@@ -70,7 +70,9 @@ export const connections = pgTable(
     userId: integer("user_id")
       .notNull()
       .references(() => users.id),
+    // The name of the provider (e.g. "google")
     providerName: text("provider_name").notNull(),
+    // The id of the user at the provider (e.g. Google's user id)
     providerId: text("provider_id").notNull(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
