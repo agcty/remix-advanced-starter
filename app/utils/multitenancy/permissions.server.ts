@@ -1,3 +1,4 @@
+import { json } from "@remix-run/node"
 import { db } from "db.server"
 import { and, eq, sql } from "drizzle-orm"
 import {
@@ -9,6 +10,7 @@ import {
   roles,
   users,
 } from "schema/postgres"
+import { requireUserId } from "../auth.server"
 
 export type Action = "create" | "read" | "update" | "delete"
 export type Entity = string
@@ -318,4 +320,63 @@ export async function deletePermission(permissionId: number): Promise<void> {
   }
 
   await db.delete(permissions).where(eq(permissions.id, permissionId))
+}
+
+/**
+ * Requires a user to be authenticated and have a specific permission for their active organization.
+ * This function is a convenience wrapper around requireUserId and userHasPermissionInActiveOrg.
+ * It is most useful in route loaders the user accesses to ensure the user has the required permission.
+ * @param request
+ * @param permissionString
+ * @returns userId
+ */
+export async function requireUserWithPermission(
+  request: Request,
+  permissionString: PermissionString,
+) {
+  const userId = await requireUserId(request)
+  const { action, entity, access } = parsePermissionString(permissionString)
+  const userHasAccess = await userHasPermissionInActiveOrg({
+    userId,
+    permissionString,
+  })
+
+  if (!userHasAccess) {
+    throw json(
+      {
+        error: "Unauthorized",
+        requiredPermission: { action, entity, access },
+        message: `Unauthorized: required permissions: ${permissionString}`,
+      },
+      { status: 403 },
+    )
+  }
+
+  return userId
+}
+
+/**
+ * Requires a user to be authenticated and have a specific role for their active organization.
+ * This function is a convenience wrapper around requireUserId and userHasRoleInActiveOrg.
+ * It is most useful in route loaders the user accesses to ensure the user has the required role.
+ * @param request
+ * @param roleName
+ * @returns
+ */
+export async function requireUserWithRole(request: Request, roleName: string) {
+  const userId = await requireUserId(request)
+  const userHasRole = await userHasRoleInActiveOrg({ userId, roleName })
+
+  if (!userHasRole) {
+    throw json(
+      {
+        error: "Unauthorized",
+        requiredRole: roleName,
+        message: `Unauthorized: required role: ${roleName}`,
+      },
+      { status: 403 },
+    )
+  }
+
+  return userId
 }
