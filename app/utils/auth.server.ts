@@ -2,28 +2,17 @@ import { redirect } from "@remix-run/node"
 import bcrypt from "bcryptjs"
 import { db } from "db.server"
 import { and, eq, gt } from "drizzle-orm"
-import { Authenticator } from "remix-auth"
 import { safeRedirect } from "remix-utils/safe-redirect"
 import { connections, passwords, sessions, users } from "schema/postgres"
-import { connectionSessionStorage, providers } from "./connections.server.ts"
+// import { connectionSessionStorage, providers } from "./connections.server.ts"
 import { combineHeaders } from "./misc"
 import { createUserWithOrganization } from "./multitenancy/user.server.js"
-import { type ProviderUser } from "./providers/provider.ts"
-import { authSessionStorage } from "./session.server.ts"
+// import { type ProviderUser } from "./providers/provider.ts"
+import { authSessionStorage } from "./session.server"
 
 export const SESSION_EXPIRATION_TIME = 1000 * 60 * 60 * 24 * 30
 export const getSessionExpirationDate = () =>
   new Date(Date.now() + SESSION_EXPIRATION_TIME)
-
-export const sessionKey = "sessionId"
-
-export const authenticator = new Authenticator<ProviderUser>(
-  connectionSessionStorage,
-)
-
-for (const [providerName, provider] of Object.entries(providers)) {
-  authenticator.use(provider.getAuthStrategy(), providerName)
-}
 
 /**
  * Retrieves the userId of the current authenticated session.
@@ -38,10 +27,10 @@ export async function getUserId(request: Request) {
   const authSession = await authSessionStorage.getSession(
     request.headers.get("cookie"),
   )
-  const sessionId = authSession.get(sessionKey)
+  const sessionId = authSession.get("sessionId")
   if (!sessionId) return null
 
-  const [session] = await db
+  const session = await db
     .select({ userId: sessions.userId })
     .from(sessions)
     .where(
@@ -49,14 +38,14 @@ export async function getUserId(request: Request) {
     )
     .limit(1)
 
-  if (!session?.userId) {
+  if (session.length === 0 || !session[0].userId) {
     throw redirect("/", {
       headers: {
         "set-cookie": await authSessionStorage.destroySession(authSession),
       },
     })
   }
-  return session.userId
+  return session[0].userId
 }
 
 /**
@@ -183,7 +172,6 @@ export async function signup({
 
 export async function signupWithConnection({
   email,
-
   name,
   providerId,
   providerName,
@@ -237,7 +225,7 @@ export async function logout(
   const authSession = await authSessionStorage.getSession(
     request.headers.get("cookie"),
   )
-  const sessionId = authSession.get(sessionKey)
+  const sessionId = authSession.get("sessionId")
   if (sessionId) {
     await db
       .delete(sessions)
