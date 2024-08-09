@@ -1,3 +1,5 @@
+// Do not add domain specific code here. It should work for any project.
+
 import { json } from "@remix-run/node"
 import { db } from "db.server"
 import { and, eq, sql } from "drizzle-orm"
