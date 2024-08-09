@@ -25,7 +25,7 @@ import { combineHeaders, getDomainUrl } from "./utils/misc"
 import { useNonce } from "./utils/nonce-provider"
 import { getTheme, type Theme } from "./utils/theme.server"
 import { makeTimings } from "./utils/timing.server"
-import { getToast } from "./utils/toaster.server"
+import { getToast } from "./utils/toast.server"
 import { useToast } from "./utils/use-toast"
 
 const queryClient = new QueryClient()
