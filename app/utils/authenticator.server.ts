@@ -10,22 +10,17 @@ type User = {
   imageUrl?: string
 }
 
-// Create an instance of the authenticator, pass a generic with what
-// strategies will return and will store in the session
 export const authenticator = new Authenticator<User>(connectionSessionStorage, {
   sessionKey: "sessionId", // keep in sync
   sessionErrorKey: "sessionErrorKey", // keep in sync
 })
-
-// You may specify a <User> type which the strategies will return (this will be stored in the session)
-// export let authenticator = new Authenticator<User>(sessionStorage, { sessionKey: '_session' });
 
 const getCallback = (provider: SocialsProvider) => {
   return `http://localhost:3333/auth/${provider}/callback`
 }
 
 /**
- * In contrast to some other examples we don't create resources for the user here.
+ * We don't create resources for the user here.
  * This is merely to populate the connectionSession with data about the user.
  * The user and other resources will be created in the callback route.
  * The reason for this is that we might want some intermediary steps before creating the user, like asking for more information.
@@ -51,13 +46,7 @@ authenticator.use(
   ),
 )
 
-// authenticator.use(
-//   new FacebookStrategy(
-//     {
-//       clientID: "YOUR_CLIENT_ID",
-//       clientSecret: "YOUR_CLIENT_SECRET",
-//       callbackURL: getCallback(SocialsProvider.FACEBOOK),
-//     },
-//     async ({ profile }) => {},
-//   ),
-// )
+export const normalizeEmail = (s: string) => s.toLowerCase()
+
+export const normalizeUsername = (s: string) =>
+  s.replace(/[^a-zA-Z0-9_]/g, "_").toLowerCase()

@@ -4,10 +4,8 @@ import { db } from "db.server"
 import { and, eq, gt } from "drizzle-orm"
 import { safeRedirect } from "remix-utils/safe-redirect"
 import { connections, passwords, sessions, users } from "schema/postgres"
-// import { connectionSessionStorage, providers } from "./connections.server.ts"
 import { combineHeaders } from "./misc"
 import { createUserWithOrganization } from "./multitenancy/user.server.js"
-// import { type ProviderUser } from "./providers/provider.ts"
 import { authSessionStorage } from "./session.server"
 
 export const SESSION_EXPIRATION_TIME = 1000 * 60 * 60 * 24 * 30
