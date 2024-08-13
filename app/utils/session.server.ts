@@ -5,7 +5,7 @@ import { z } from "zod"
 const sessionSchema = z.object({
   verifiedTime: z.date().optional(),
   sessionId: z.number().optional(),
-  expires: z.date().optional(),
+  expires: z.any().optional(),
 })
 
 const sessionStorage = createCookieSessionStorage({

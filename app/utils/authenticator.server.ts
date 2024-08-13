@@ -16,7 +16,7 @@ export const authenticator = new Authenticator<User>(connectionSessionStorage, {
 })
 
 const getCallback = (provider: SocialsProvider) => {
-  return `http://localhost:3333/auth/${provider}/callback`
+  return `http://localhost:3000/auth/${provider}/callback`
 }
 
 /**
