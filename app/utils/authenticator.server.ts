@@ -34,6 +34,7 @@ authenticator.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: getCallback(SocialsProvider.GOOGLE),
     },
+    // For strategies that set up a connection, we just return the user object and don't create any resources.
     async ({ profile }) => {
       return {
         email: profile.emails[0].value,
