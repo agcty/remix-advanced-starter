@@ -5,6 +5,7 @@ import {
   requireUserWithPermission,
   requireUserWithRole,
 } from "~/utils/multitenancy/permissions.server"
+import { redirectWithToast } from "~/utils/toast.server"
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const orgs = await db.query.organizations.findMany()
@@ -12,9 +13,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const sessions = await db.query.sessions.findMany()
   const connections = await db.query.connections.findMany()
 
-  const userId = await requireUserId(request)
-  // await requireUserWithPermission(request, "read:user")
-  // await requireUserWithRole(request, "OWNER")
+  return redirectWithToast("/", {
+    title: "Test",
+    description: "This is a test page.",
+  })
 
-  return json({ orgs, users, sessions, connections, userId })
 }
