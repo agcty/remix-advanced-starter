@@ -1,7 +1,7 @@
 import { type LoaderFunctionArgs } from "@remix-run/node"
 import { z } from "zod"
 import { getUserId } from "~/utils/auth.server"
-import { authenticator } from "~/utils/authenticator.server"
+import { authenticator, ProviderNameSchema } from "~/utils/authenticator.server"
 import { createUserWithOrganization } from "~/utils/multitenancy/user.server"
 import {
   destroyRedirectToHeader,
@@ -16,9 +16,6 @@ import {
 } from "./helpers"
 
 const destroyRedirectTo = { "set-cookie": destroyRedirectToHeader }
-
-const validProviders = ["google"] as const
-const ProviderNameSchema = z.enum(validProviders)
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const providerName = ProviderNameSchema.parse(params.provider)

@@ -1,5 +1,6 @@
 import { Authenticator } from "remix-auth"
 import { GoogleStrategy } from "remix-auth-google"
+import { z } from "zod"
 import { connectionSessionStorage } from "./connections.server"
 
 type User = {
@@ -15,10 +16,11 @@ export const authenticator = new Authenticator<User>(connectionSessionStorage, {
   sessionErrorKey: "sessionErrorKey", // keep in sync
 })
 
-export const socialsProviders = ["google"] as const
-export type SocialsProvider = (typeof socialsProviders)[number]
+export const validProviders = ["google"] as const
+export const ProviderNameSchema = z.enum(validProviders)
+export type ProviderName = z.infer<typeof ProviderNameSchema>
 
-const getCallback = (provider: SocialsProvider) => {
+const getCallback = (provider: ProviderName) => {
   return `http://localhost:3000/auth/${provider}/callback`
 }
 
