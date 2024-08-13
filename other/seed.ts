@@ -2,8 +2,8 @@
 import { db } from "db.server"
 import { sql } from "drizzle-orm"
 import * as schema from "schema/postgres"
+import { type InsertPermission } from "schema/sqlite"
 import {
-  type Access,
   type Action,
   addPermissionToRole,
   createPermission,
@@ -43,7 +43,7 @@ export async function seed(): Promise<void> {
           const permissionId = await createPermission({
             entity: entity as Entity,
             action: action as Action,
-            access: access as Access,
+            access: access as InsertPermission["access"],
           })
 
           // Assign permissions to roles based on their level

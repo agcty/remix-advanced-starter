@@ -1,12 +1,11 @@
-import { json } from "@remix-run/node"
+import { json, type LoaderFunctionArgs } from "@remix-run/node"
 import { db } from "db.server"
-import { requireUserId } from "~/utils/auth.server"
 import {
   requireUserWithPermission,
   requireUserWithRole,
 } from "~/utils/multitenancy/permissions.server"
 
-export async function loader({ request }) {
+export async function loader({ request }: LoaderFunctionArgs) {
   const orgs = await db.query.organizations.findMany()
   const users = await db.query.users.findMany()
   const sessions = await db.query.sessions.findMany()
