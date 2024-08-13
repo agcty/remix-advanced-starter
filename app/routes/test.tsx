@@ -17,5 +17,4 @@ export async function loader({ request }: LoaderFunctionArgs) {
     title: "Test",
     description: "This is a test page.",
   })
-
 }
