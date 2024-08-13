@@ -1,5 +1,6 @@
 import { Authenticator } from "remix-auth"
-import { GoogleStrategy, SocialsProvider } from "remix-auth-socials"
+import { GoogleStrategy } from "remix-auth-google"
+import { z } from "zod"
 import { connectionSessionStorage } from "./connections.server"
 
 type User = {
@@ -15,7 +16,11 @@ export const authenticator = new Authenticator<User>(connectionSessionStorage, {
   sessionErrorKey: "sessionErrorKey", // keep in sync
 })
 
-const getCallback = (provider: SocialsProvider) => {
+export const validProviders = ["google"] as const
+export const ProviderNameSchema = z.enum(validProviders)
+export type ProviderName = z.infer<typeof ProviderNameSchema>
+
+const getCallback = (provider: ProviderName) => {
   return `http://localhost:3000/auth/${provider}/callback`
 }
 
@@ -32,7 +37,7 @@ authenticator.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: getCallback(SocialsProvider.GOOGLE),
+      callbackURL: getCallback("google"),
     },
     // For strategies that set up a connection, we just return the user object and don't create any resources.
     async ({ profile }) => {
