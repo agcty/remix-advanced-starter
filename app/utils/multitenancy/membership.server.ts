@@ -1,3 +1,5 @@
+// Do not add domain specific code here. It should work for any project.
+
 import { db } from "db.server"
 import { and, eq } from "drizzle-orm"
 import * as schema from "schema/postgres"

@@ -2,33 +2,30 @@ import { redirect } from "@remix-run/node"
 import bcrypt from "bcryptjs"
 import { db } from "db.server"
 import { and, eq, gt } from "drizzle-orm"
-import { Authenticator } from "remix-auth"
 import { safeRedirect } from "remix-utils/safe-redirect"
 import { connections, passwords, sessions, users } from "schema/postgres"
-import { connectionSessionStorage, providers } from "./connections.server.ts"
 import { combineHeaders } from "./misc"
-import { type ProviderUser } from "./providers/provider.ts"
-import { authSessionStorage } from "./session.server.ts"
+import { createUserWithOrganization } from "./multitenancy/user.server.js"
+import { authSessionStorage } from "./session.server"
 
 export const SESSION_EXPIRATION_TIME = 1000 * 60 * 60 * 24 * 30
 export const getSessionExpirationDate = () =>
   new Date(Date.now() + SESSION_EXPIRATION_TIME)
 
-export const sessionKey = "sessionId"
-
-export const authenticator = new Authenticator<ProviderUser>(
-  connectionSessionStorage,
-)
-
-for (const [providerName, provider] of Object.entries(providers)) {
-  authenticator.use(provider.getAuthStrategy(), providerName)
-}
-
+/**
+ * Retrieves the userId of the current authenticated session.
+ * This function performs several key steps:
+ * 1. Extracts the session from the request cookies
+ * 2. Checks if a valid sessionId exists
+ * 3. Queries the database to verify if the session is still valid and not expired
+ * 4. If the session is invalid or expired, it destroys the session and redirects
+ * 5. Returns the userId if the session is valid
+ */
 export async function getUserId(request: Request) {
   const authSession = await authSessionStorage.getSession(
     request.headers.get("cookie"),
   )
-  const sessionId = authSession.get(sessionKey)
+  const sessionId = authSession.get("sessionId")
   if (!sessionId) return null
 
   const session = await db
@@ -37,18 +34,23 @@ export async function getUserId(request: Request) {
     .where(
       and(eq(sessions.id, sessionId), gt(sessions.expirationDate, new Date())),
     )
-    .get()
+    .limit(1)
 
-  if (!session?.userId) {
+  if (session.length === 0 || !session[0].userId) {
     throw redirect("/", {
       headers: {
         "set-cookie": await authSessionStorage.destroySession(authSession),
       },
     })
   }
-  return session.userId
+  return session[0].userId
 }
 
+/**
+ * Ensures that a user is authenticated before allowing access.
+ * If not authenticated, it redirects to the login page.
+ * The function also handles preserving the original request URL for redirection after login.
+ */
 export async function requireUserId(
   request: Request,
   { redirectTo }: { redirectTo?: string | null } = {},
@@ -69,6 +71,11 @@ export async function requireUserId(
   return userId
 }
 
+/**
+ * Ensures that the current request is from an unauthenticated user.
+ * If a user is already authenticated, it redirects them to the home page.
+ * This is useful for pages that should only be accessed by non-logged-in users.
+ */
 export async function requireAnonymous(request: Request) {
   const userId = await getUserId(request)
   if (userId) {
@@ -85,14 +92,13 @@ export async function login({
 }) {
   const user = await verifyUserPassword({ username }, password)
   if (!user) return null
-  const session = await db
+  const [session] = await db
     .insert(sessions)
     .values({
       userId: user.id,
       expirationDate: getSessionExpirationDate(),
     })
     .returning()
-    .get()
   return session
 }
 
@@ -104,44 +110,44 @@ export async function resetUserPassword({
   password: string
 }) {
   const hashedPassword = await getPasswordHash(password)
-  return db
-    .update(users)
-    .set({
-      updatedAt: new Date(),
-    })
-    .where(eq(users.email, username))
-    .run()
-    .then(() => {
-      return db
-        .update(passwords)
-        .set({ hash: hashedPassword })
-        .where(eq(passwords.userId, users.id))
-        .run()
-    })
+  await db.transaction(async tx => {
+    await tx
+      .update(users)
+      .set({
+        updatedAt: new Date(),
+      })
+      .where(eq(users.email, username))
+      .execute()
+
+    await tx
+      .update(passwords)
+      .set({ hash: hashedPassword })
+      .where(eq(passwords.userId, users.id))
+      .execute()
+  })
 }
 
 export async function signup({
   email,
-  username,
   password,
   name,
+  organizationName,
 }: {
   email: string
   username: string
   name: string
   password: string
+  organizationName: string
 }) {
   const hashedPassword = await getPasswordHash(password)
 
-  const user = await db
-    .insert(users)
-    .values({
+  const { user } = await createUserWithOrganization({
+    user: {
       email: email.toLowerCase(),
       name,
-      globalRole: "CUSTOMER",
-    })
-    .returning()
-    .get()
+    },
+    organizationName,
+  })
 
   await db
     .insert(passwords)
@@ -149,44 +155,40 @@ export async function signup({
       userId: user.id,
       hash: hashedPassword,
     })
-    .run()
+    .execute()
 
-  const session = await db
+  const [session] = await db
     .insert(sessions)
     .values({
       userId: user.id,
       expirationDate: getSessionExpirationDate(),
     })
     .returning()
-    .get()
 
-  return session
+  return { user, session }
 }
 
 export async function signupWithConnection({
   email,
-  username,
   name,
   providerId,
   providerName,
-  imageUrl,
+
+  organizationName,
 }: {
   email: string
-  username: string
   name: string
   providerId: string
   providerName: string
-  imageUrl?: string
+  organizationName: string
 }) {
-  const user = await db
-    .insert(users)
-    .values({
+  const { user } = await createUserWithOrganization({
+    user: {
       email: email.toLowerCase(),
       name,
-      globalRole: "CUSTOMER",
-    })
-    .returning()
-    .get()
+    },
+    organizationName,
+  })
 
   await db
     .insert(connections)
@@ -195,20 +197,17 @@ export async function signupWithConnection({
       providerId,
       providerName,
     })
-    .run()
+    .execute()
 
-  // Note: Image handling is omitted as it's not clear how it's implemented in the new schema
-
-  const session = await db
+  const [session] = await db
     .insert(sessions)
     .values({
       userId: user.id,
       expirationDate: getSessionExpirationDate(),
     })
     .returning()
-    .get()
 
-  return session
+  return { user, session }
 }
 
 export async function logout(
@@ -224,12 +223,12 @@ export async function logout(
   const authSession = await authSessionStorage.getSession(
     request.headers.get("cookie"),
   )
-  const sessionId = authSession.get(sessionKey)
+  const sessionId = authSession.get("sessionId")
   if (sessionId) {
     await db
       .delete(sessions)
       .where(eq(sessions.id, sessionId))
-      .run()
+      .execute()
       .catch(() => {}) // Ignore deletion errors
   }
   throw redirect(safeRedirect(redirectTo), {
@@ -250,7 +249,7 @@ export async function verifyUserPassword(
   where: { username: string } | { id: number },
   password: string,
 ) {
-  const userWithPassword = await db
+  const [userWithPassword] = await db
     .select({
       id: users.id,
       hash: passwords.hash,
@@ -262,7 +261,7 @@ export async function verifyUserPassword(
         ? eq(users.email, where.username)
         : eq(users.id, where.id),
     )
-    .get()
+    .limit(1)
 
   if (!userWithPassword || !userWithPassword.hash) {
     return null

@@ -1,9 +1,8 @@
 import { createId as cuid } from "@paralleldrive/cuid2"
 import { createCookieSessionStorage, redirect } from "@remix-run/node"
+import { createTypedSessionStorage } from "remix-utils/typed-session"
 import { z } from "zod"
 import { combineHeaders } from "./misc"
-
-export const toastKey = "toast"
 
 const ToastSchema = z.object({
   description: z.string(),
@@ -15,7 +14,11 @@ const ToastSchema = z.object({
 export type Toast = z.infer<typeof ToastSchema>
 export type ToastInput = z.input<typeof ToastSchema>
 
-export const toastSessionStorage = createCookieSessionStorage({
+const sessionSchema = z.object({
+  toast: ToastSchema.optional(),
+})
+
+const cookieSessionStorage = createCookieSessionStorage({
   cookie: {
     name: "en_toast",
     sameSite: "lax",
@@ -24,6 +27,11 @@ export const toastSessionStorage = createCookieSessionStorage({
     secrets: process.env.SESSION_SECRET.split(","),
     secure: process.env.NODE_ENV === "production",
   },
+})
+
+export const toastSessionStorage = createTypedSessionStorage({
+  sessionStorage: cookieSessionStorage,
+  schema: sessionSchema,
 })
 
 export async function redirectWithToast(
@@ -40,7 +48,7 @@ export async function redirectWithToast(
 export async function createToastHeaders(toastInput: ToastInput) {
   const session = await toastSessionStorage.getSession()
   const toast = ToastSchema.parse(toastInput)
-  session.flash(toastKey, toast)
+  session.set("toast", toast)
   const cookie = await toastSessionStorage.commitSession(session)
   return new Headers({ "set-cookie": cookie })
 }
@@ -49,8 +57,7 @@ export async function getToast(request: Request) {
   const session = await toastSessionStorage.getSession(
     request.headers.get("cookie"),
   )
-  const result = ToastSchema.safeParse(session.get(toastKey))
-  const toast = result.success ? result.data : null
+  const toast = session.get("toast")
   return {
     toast,
     headers: toast

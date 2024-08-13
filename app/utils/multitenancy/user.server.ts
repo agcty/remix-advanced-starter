@@ -1,3 +1,5 @@
+// Do not add domain specific code here. It should work for any project.
+
 import { db } from "db.server"
 import * as schema from "schema/postgres"
 import { type TransactionParam } from "schema/types"

@@ -1,3 +1,6 @@
+// Do not add domain specific code here. It should work for any project.
+
+import { json } from "@remix-run/node"
 import { db } from "db.server"
 import { and, eq, sql } from "drizzle-orm"
 import {
@@ -7,7 +10,9 @@ import {
   permissions,
   rolePermissions,
   roles,
+  users,
 } from "schema/postgres"
+import { requireUserId } from "../auth.server"
 
 export type Action = "create" | "read" | "update" | "delete"
 export type Entity = string
@@ -157,6 +162,74 @@ export async function userHasRole({
   return userRoles.length > 0
 }
 
+/**
+ * Fetches the active organization ID for a given user.
+ *
+ * @param userId - The ID of the user.
+ * @returns A Promise that resolves to the active organization ID or null if not found.
+ */
+async function getActiveOrganizationId({
+  userId,
+}: {
+  userId: number
+}): Promise<number | null> {
+  const result = await db
+    .select({ activeOrganizationId: users.activeOrganizationId })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1)
+
+  return result.length > 0 ? result[0].activeOrganizationId : null
+}
+
+/**
+ * Checks if a user has a specific permission within their active organization.
+ *
+ * @param params - An object containing userId and permissionString.
+ * @returns A Promise that resolves to a boolean indicating whether the user has the specified permission.
+ * @throws An error if the user doesn't have an active organization.
+ */
+export async function userHasPermissionInActiveOrg({
+  userId,
+  permissionString,
+}: Omit<UserPermissionParams, "organizationId">): Promise<boolean> {
+  const activeOrganizationId = await getActiveOrganizationId({ userId })
+
+  if (activeOrganizationId === null) {
+    throw new Error("User does not have an active organization")
+  }
+
+  return userHasPermission({
+    userId,
+    organizationId: activeOrganizationId,
+    permissionString,
+  })
+}
+
+/**
+ * Checks if a user has a specific role within their active organization.
+ *
+ * @param params - An object containing userId and roleName.
+ * @returns A Promise that resolves to a boolean indicating whether the user has the specified role.
+ * @throws An error if the user doesn't have an active organization.
+ */
+export async function userHasRoleInActiveOrg({
+  userId,
+  roleName,
+}: Omit<UserRoleParams, "organizationId">): Promise<boolean> {
+  const activeOrganizationId = await getActiveOrganizationId({ userId })
+
+  if (activeOrganizationId === null) {
+    throw new Error("User does not have an active organization")
+  }
+
+  return userHasRole({
+    userId,
+    organizationId: activeOrganizationId,
+    roleName,
+  })
+}
+
 export async function getPermissionsByRoleName(roleName: string) {
   const result = await db
     .select({
@@ -249,4 +322,63 @@ export async function deletePermission(permissionId: number): Promise<void> {
   }
 
   await db.delete(permissions).where(eq(permissions.id, permissionId))
+}
+
+/**
+ * Requires a user to be authenticated and have a specific permission for their active organization.
+ * This function is a convenience wrapper around requireUserId and userHasPermissionInActiveOrg.
+ * It is most useful in route loaders the user accesses to ensure the user has the required permission.
+ * @param request
+ * @param permissionString
+ * @returns userId
+ */
+export async function requireUserWithPermission(
+  request: Request,
+  permissionString: PermissionString,
+) {
+  const userId = await requireUserId(request)
+  const { action, entity, access } = parsePermissionString(permissionString)
+  const userHasAccess = await userHasPermissionInActiveOrg({
+    userId,
+    permissionString,
+  })
+
+  if (!userHasAccess) {
+    throw json(
+      {
+        error: "Unauthorized",
+        requiredPermission: { action, entity, access },
+        message: `Unauthorized: required permissions: ${permissionString}`,
+      },
+      { status: 403 },
+    )
+  }
+
+  return userId
+}
+
+/**
+ * Requires a user to be authenticated and have a specific role for their active organization.
+ * This function is a convenience wrapper around requireUserId and userHasRoleInActiveOrg.
+ * It is most useful in route loaders the user accesses to ensure the user has the required role.
+ * @param request
+ * @param roleName
+ * @returns
+ */
+export async function requireUserWithRole(request: Request, roleName: string) {
+  const userId = await requireUserId(request)
+  const userHasRole = await userHasRoleInActiveOrg({ userId, roleName })
+
+  if (!userHasRole) {
+    throw json(
+      {
+        error: "Unauthorized",
+        requiredRole: roleName,
+        message: `Unauthorized: required role: ${roleName}`,
+      },
+      { status: 403 },
+    )
+  }
+
+  return userId
 }
