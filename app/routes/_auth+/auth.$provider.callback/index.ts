@@ -121,7 +121,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     )
   }
 
-  // If no user exists at all, create a new user and organization
+  // TODO: Allow the user to get invited to an organization without creating a new one
   const { user: newUser } = await createUserWithOrganization({
     user: {
       email: profile.email.toLowerCase(),
