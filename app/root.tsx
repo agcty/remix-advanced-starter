@@ -1,7 +1,5 @@
-import "./tailwind.css"
-import "./sonner.css"
 import { RouterProvider } from "react-aria-components"
-import { json, type LoaderFunction } from "@remix-run/node"
+import { json, type LinksFunction, type LoaderFunction } from "@remix-run/node"
 import {
   Links,
   Meta,
@@ -19,6 +17,8 @@ import { cookieToInitialState, WagmiProvider } from "wagmi"
 import { GeneralErrorBoundary } from "./components/error-boundary"
 import { useTheme } from "./routes/api+/theme-switch"
 import Toaster from "./routes/components/Toast"
+import sonner from "./sonner.css?url"
+import tailwindcss from "./tailwind.css?url"
 import { config } from "./utils/chain-config"
 import { ClientHintCheck, getHints } from "./utils/client-hints"
 import { getEnv } from "./utils/env.server"
@@ -29,6 +29,10 @@ import { makeTimings } from "./utils/timing.server"
 import { getToast } from "./utils/toast.server"
 import { useToast } from "./utils/use-toast"
 
+export const links: LinksFunction = () => [
+  { rel: "stylesheet", href: tailwindcss },
+  { rel: "stylesheet", href: sonner },
+]
 const queryClient = new QueryClient()
 
 export const loader: LoaderFunction = async ({ request }) => {
