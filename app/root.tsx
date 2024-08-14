@@ -1,5 +1,5 @@
 import "./tailwind.css"
-import "./sonner.css"
+// import "./sonner.css"
 import { RouterProvider } from "react-aria-components"
 import { json, type LoaderFunction } from "@remix-run/node"
 import {
