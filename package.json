@@ -16,7 +16,8 @@
     "seed": "tsx other/seed-current-db.ts",
     "teardown": "tsx other/teardown-current-db.ts",
     "test": "vitest",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+    "migrate": "pnpm tsx other/migrate.ts"
   },
   "dependencies": {
     "@conform-to/react": "^1.1.5",
