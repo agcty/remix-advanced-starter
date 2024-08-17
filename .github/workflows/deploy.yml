@@ -9,10 +9,6 @@ on:
 env:
   NODE_VERSION: "20"
   PNPM_VERSION: "9"
-  SENTRY_ORG: ${{ secrets.SENTRY_AUTH }}
-  POSTGRES_DB: testdb
-  POSTGRES_USER: testuser
-  POSTGRES_PASSWORD: testpass
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -79,9 +75,9 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_DB: testdb
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
         ports:
           - 5432:5432
         options: >-
@@ -113,14 +109,43 @@ jobs:
         env:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+          POSTGRES_DB: testdb
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+
+  migrate:
+    name: 🛸 Run Database Migrations
+    runs-on: ubuntu-22.04
+    needs: [lint, typecheck, test]
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Use Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Execute migrations
+        run: pnpm run migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
   deploy:
     name: 🚀 Deploy
     runs-on: ubuntu-22.04
-    needs: [lint, typecheck, test]
+    needs: [lint, typecheck, test, migrate]
     if: ${{ github.event_name == 'push' }}
 
     steps:
