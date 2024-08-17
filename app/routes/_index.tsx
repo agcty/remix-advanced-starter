@@ -72,6 +72,7 @@ export default function Index() {
           <ConnectWallet />
         </>
       )}
+      <p className="text-red-400">test</p>
     </div>
   )
 }
