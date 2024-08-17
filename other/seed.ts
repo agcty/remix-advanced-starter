@@ -2,7 +2,7 @@
 import { db } from "db.server"
 import { sql } from "drizzle-orm"
 import * as schema from "schema/postgres"
-import { type InsertPermission } from "schema/sqlite"
+import { type InsertPermission } from "schema/postgres"
 import {
   type Action,
   addPermissionToRole,
