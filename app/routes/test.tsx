@@ -5,6 +5,7 @@ import {
   requireUserWithPermission,
   requireUserWithRole,
 } from "~/utils/multitenancy/permissions.server"
+import { createUserWithOrganization } from "~/utils/multitenancy/user.server"
 import { redirectWithToast } from "~/utils/toast.server"
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -13,8 +14,18 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const sessions = await db.query.sessions.findMany()
   const connections = await db.query.connections.findMany()
 
-  return redirectWithToast("/", {
-    title: "Test",
-    description: "This is a test page.",
+  // await createUserWithOrganization({
+  //   organizationName: "Gogl",
+  //   user: {
+  //     email: "alex@gogl.io",
+  //     name: "Alex",
+  //   },
+  // })
+
+  return json({
+    orgs,
+    users,
+    sessions,
+    connections,
   })
 }

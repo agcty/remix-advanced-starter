@@ -19,7 +19,8 @@ Run the following commands in project root:
 
 ```bash
 docker build -t remix-vite:latest -f other/Dockerfile .
-docker run -it --rm -p 3000:3000 --env-file .env -v ./sqlite.db:/app/sqlite.db remix-vite:latest
+# docker run -it --rm -p 3000:3000 --env-file .env -v ./sqlite.db:/app/sqlite.db remix-vite:latest
+docker run -it --rm -p 3000:3000 --env-file .env remix-vite:latest
 ```
 
 ## Deploy to fly directly
@@ -62,3 +63,13 @@ DOCKER_BUILDKIT=1 docker build --no-cache \
   -f other/Dockerfile \
   .
 ```
+
+## Env Variables
+
+### Github Actions
+
+`DATABASE_URL` for migrations
+`SENTRY_AUTH_TOKEN` for sentry releases
+`SENTRY_ORG` for sentry releases
+`SENTRY_PROJECT` for sentry releases
+`FLY_API_TOKEN` for fly deployments
