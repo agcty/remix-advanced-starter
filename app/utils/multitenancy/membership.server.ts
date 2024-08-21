@@ -53,48 +53,53 @@ export async function createPendingMembership({
   return newMembership
 }
 
-export async function createMembership({
-  userId,
-  organizationId,
-  tx = db,
-}: {
-  userId: number
-  organizationId: number
-} & TransactionParam): Promise<schema.Membership> {
-  const [membership] = await tx
-    .insert(schema.memberships)
-    .values({
-      organizationId,
-      userId,
-    })
-    .returning()
-  return membership
-}
+export const createMembership = schema.withTransaction(
+  async ({
+    userId,
+    organizationId,
+    tx,
+  }: schema.WithTransactionParams<{
+    userId: number
+    organizationId: number
+  }>) => {
+    const [membership] = await tx
+      .insert(schema.memberships)
+      .values({
+        organizationId,
+        userId,
+      })
+      .returning()
 
-export async function addRoleToMembership({
-  membershipId,
-  roleName,
-  tx = db,
-}: {
-  membershipId: number
-  roleName: string
-} & TransactionParam): Promise<void> {
-  const [role] = await tx
-    .select()
-    .from(schema.roles)
-    .where(eq(schema.roles.name, roleName))
+    return membership
+  },
+)
 
-  if (!role) {
-    throw new Error(
-      `${roleName} role not found. Please ensure the database is properly seeded.`,
-    )
-  }
-
-  await tx.insert(schema.membershipRoles).values({
+export const addRoleToMembership = schema.withTransaction(
+  async ({
     membershipId,
-    roleId: role.id,
-  })
-}
+    roleName,
+    tx,
+  }: schema.WithTransactionParams<{
+    membershipId: number
+    roleName: string
+  }>) => {
+    const [role] = await tx
+      .select()
+      .from(schema.roles)
+      .where(eq(schema.roles.name, roleName))
+
+    if (!role) {
+      throw new Error(
+        `${roleName} role not found. Please ensure the database is properly seeded.`,
+      )
+    }
+
+    await tx.insert(schema.membershipRoles).values({
+      membershipId,
+      roleId: role.id,
+    })
+  },
+)
 
 export async function removeRoleFromMembership({
   membershipId,

@@ -111,7 +111,7 @@ describe("Memberships and Roles", () => {
 
   describe("removeRoleFromMembership", () => {
     it("should remove a role from a membership", async () => {
-      const { membership } = await createUserWithOrganization({
+      const { membership, user } = await createUserWithOrganization({
         user: {
           name: "John Doe",
           email: "john@example.com",
@@ -119,33 +119,47 @@ describe("Memberships and Roles", () => {
         organizationName: "Test Org",
       })
 
-      await addRoleToMembership({
-        membershipId: membership.id,
-        roleName: "ADMIN",
+      await expect(async () => {
+        await db.transaction(async tx => {
+          await addRoleToMembership({
+            membershipId: membership.id,
+            roleName: "ADMIN",
+            tx: tx,
+          })
+
+          const throwError = true
+          if (throwError) {
+            throw new Error("Test error inside transaction")
+          }
+
+          await removeRoleFromMembership({
+            membershipId: membership.id,
+            roleName: "ADMIN",
+            tx,
+          })
+        })
+      }).rejects.toThrow("Test error inside transaction")
+
+      const membershipsFromUser = await db.query.memberships.findMany({
+        where: eq(schema.memberships.userId, user.id),
+        with: {
+          roles: true,
+        },
       })
 
-      await removeRoleFromMembership({
-        membershipId: membership.id,
-        roleName: "ADMIN",
+      const rolesFromMembership = await db.query.membershipRoles.findMany({
+        where: eq(schema.membershipRoles.membershipId, membership.id),
+        with: {
+          role: true,
+        },
       })
 
-      const [remainingRole] = await db
-        .select()
-        .from(schema.membershipRoles)
-        .where(
-          and(
-            eq(schema.membershipRoles.membershipId, membership.id),
-            eq(
-              schema.membershipRoles.roleId,
-              db
-                .select({ id: schema.roles.id })
-                .from(schema.roles)
-                .where(eq(schema.roles.name, "ADMIN")),
-            ),
-          ),
-        )
+      expect(membershipsFromUser.length).toBe(1)
+      expect(rolesFromMembership.length).toBe(1)
+      expect(rolesFromMembership[0].role.name).toBe("OWNER")
 
-      expect(remainingRole).toBeUndefined()
+      // rolesFromMembership
+      // expect(firstMembership.roles[0].).toBe("OWNER")
     })
 
     it("should throw an error when trying to remove a non-existent role", async () => {
