@@ -2,7 +2,7 @@ import fs from "node:fs"
 import path from "node:path"
 import { config } from "dotenv"
 import { execaCommand } from "execa"
-import { initEnv } from "~/utils/env.server"
+// import { initEnv } from "~/utils/env.server"
 
 config({ path: path.join(process.cwd(), ".env.test") })
 
@@ -10,7 +10,7 @@ export async function setup() {
   try {
     console.log("Starting test environment setup...")
 
-    initEnv()
+    // initEnv()
 
     console.log("Creating new database...")
 
